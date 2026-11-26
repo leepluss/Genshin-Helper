@@ -152,10 +152,3 @@ Shift/Ctrl-free left-hand `Alt` combos — fully customizable in **Extension Pop
 
 ---
 
-## Support the Project
-
-Genshin-Helper is **100% free, open-source, and ad-free** — every feature stays unlocked forever. Updating map datasets, cave layers, and CV tracking for every new Genshin region (Nod-Krai, upcoming Snezhnaya) takes dedicated time. If it saves you hours exploring Teyvat, a voluntary coffee helps keep updates fast and sustainable:
-
-| International Supporters | Supporters in Vietnam (MoMo / VietQR) |
-| :---: | :---: |
-| <a href="https://ko-fi.com/minmories"><img src="https://img.shields.io/badge/Support%20on%20Ko--fi-minmories-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white" alt="Support on Ko-fi" /></a><br/><br/><strong>Ko-fi:</strong> <https://ko-fi.com/minmories><br/><strong>GitHub Sponsors:</strong> <code>@tuanminh26596</code> <em>(pending review)</em><br/><strong>Discord:</strong> <https://discord.gg/DdA4qyvqH3><br/><br/><sub>100% voluntary tip — thank you for keeping this project alive!</sub> | <img src="assets/donate/momo_qr.jpg" alt="MoMo VietQR Support" width="180" /><br/><sub>Scan with MoMo or any VN banking app</sub> |
