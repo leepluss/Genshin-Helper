@@ -1,0 +1,82 @@
+{
+  "manifest_version": 3,
+  "name": "Genshin Helper — HoYoLAB Auto-Sync",
+  "version": "5.7.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAr42c2LmLkpzGwbC5wX5UYCgWqGZkYq67Fq5UWtiSQGaytjD3Kp1gh2w5Gs4opJAymDEtmzg9bedjgGdwekoNoGCWuNx21yXgLYiM2rFncEDMG2/yWNkzwSbkomEsyk3PNWZEN820sM30DpK7s6lWtLbz6x1nfd7a58srM4dIIdo3UAdlsSxvmvdYnPvOFAYgW3tMQrW9jlknQDEMawmzKYx4rMjBfPE1Ghg4d/qBzjG8NYS1me/RJ0Aj3nAzuqxDhEDHqbBZC8+VF8rhtt3nUMducH2QKRAXUq8qheUC8X+bSyfDAQUCNezomLdn8JSEn4Uy29TZjBQGzxECiiGLZQIDAQAB",
+  "description": "Đồng bộ vị trí người chơi Genshin Impact thời gian thực lên HoYoLAB Interactive Map (Zero-Throttle MV3).",
+  "permissions": [
+    "storage",
+    "tabs",
+    "alarms",
+    "nativeMessaging",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://act.hoyolab.com/*",
+    "http://127.0.0.1:8765/*",
+    "http://localhost:8765/*"
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Genshin Helper — HoYoLAB Auto-Sync",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://act.hoyolab.com/*"
+      ],
+      "js": [
+        "route_hook.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://act.hoyolab.com/*"
+      ],
+      "js": [
+        "content_bridge.js",
+        "i18n_bridge.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://act.hoyolab.com/*"
+      ],
+      "js": [
+        "i18n.js",
+        "page_main.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "locales/vi.json",
+        "locales/en.json"
+      ],
+      "matches": [
+        "https://act.hoyolab.com/*"
+      ]
+    }
+  ]
+}

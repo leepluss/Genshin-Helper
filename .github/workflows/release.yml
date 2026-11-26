@@ -1,0 +1,182 @@
+name: Release Setup Installer
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build Windows Setup Installer & Publish Release
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: Set up Python 3.12 (stdlib tooling)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Inno Setup 6
+        run: choco install innosetup -y --no-progress
+
+      - name: Verify pre-build gates (clippy, nextest, i18n/ext, IP audit)
+        run: |
+          $env:PYTHONUTF8 = "1"
+          cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo nextest run --manifest-path rust/Cargo.toml --workspace
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tests/verify_i18n_and_ext_v5.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/audit_release.py --strict-ip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/audit_release.py --dir rust --strict-ip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build, Bundle Licenses, Audit & Package Windows Setup Installer
+        run: |
+          $env:PYTHONUTF8 = "1"
+          $env:PYTHON_EXE = (Get-Command python).Source
+          pwsh -NoProfile -ExecutionPolicy Bypass -File installer/build_release.ps1
+
+      - name: Verify Black-Box Contract Test Suite against packaged release EXEs
+        run: |
+          $env:PYTHONUTF8 = "1"
+          $env:GH_TEST_HOST_COLD_LAUNCH = "1"
+          $env:GH_HOST_SKIP_SCHTASKS = "1"
+          python tests/test_blackbox_contracts.py --backend rust --server-exe dist/GenshinHelper/GenshinHelper.exe --host-exe dist/GenshinHelper/GenshinHelperHost.exe -v
+
+      # Opt-in SignPath Foundation OSS Code Signing (distilled from Scighost/Starward MIT pattern).
+      # To enable on tagged releases (`v*`), configure all four GitHub Actions repository secrets:
+      #   - SIGNPATH_API_TOKEN
+      #   - SIGNPATH_ORGANIZATION_ID
+      #   - SIGNPATH_PROJECT_SLUG
+      #   - SIGNPATH_SIGNING_POLICY_SLUG
+      # When any secret is unset, signing is skipped cleanly and the existing unsigned release flow
+      # (with SHA256SUMS.txt from installer/build_release.ps1) runs unchanged.
+      - name: Check SignPath OSS code signing configuration
+        id: signpath_gate
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+        run: |
+          $enabled = (
+            -not [string]::IsNullOrWhiteSpace($env:SIGNPATH_API_TOKEN) -and
+            -not [string]::IsNullOrWhiteSpace($env:SIGNPATH_ORGANIZATION_ID) -and
+            -not [string]::IsNullOrWhiteSpace($env:SIGNPATH_PROJECT_SLUG) -and
+            -not [string]::IsNullOrWhiteSpace($env:SIGNPATH_SIGNING_POLICY_SLUG)
+          )
+          if ($enabled) {
+            $setup = Get-ChildItem -Path "dist/installer/GenshinHelper-Setup-v*.exe" | Select-Object -First 1
+            if (-not $setup) {
+              throw "Missing Setup installer under dist/installer/ for SignPath signing."
+            }
+            "enabled=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "setup_name=$($setup.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Host "SignPath code signing enabled for $($setup.Name)."
+          } else {
+            "enabled=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Host "SignPath secrets not configured; proceeding with unsigned release build."
+          }
+
+      - name: Upload unsigned Setup installer for SignPath provenance
+        id: upload_unsigned_setup
+        if: startsWith(github.ref, 'refs/tags/v') && steps.signpath_gate.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-setup-for-signpath
+          path: dist/installer/GenshinHelper-Setup-v*.exe
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Sign Windows Setup Installer via SignPath Foundation
+        if: startsWith(github.ref, 'refs/tags/v') && steps.signpath_gate.outputs.enabled == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.upload_unsigned_setup.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: dist/installer-signed
+
+      - name: Verify Authenticode signature & recompute SHA256SUMS.txt
+        if: startsWith(github.ref, 'refs/tags/v') && steps.signpath_gate.outputs.enabled == 'true'
+        env:
+          SETUP_NAME: ${{ steps.signpath_gate.outputs.setup_name }}
+        run: |
+          $SetupName = $env:SETUP_NAME
+          $SignedDir = "dist/installer-signed"
+          $SignedExe = Get-ChildItem -Path $SignedDir -Recurse -File -Filter $SetupName | Select-Object -First 1
+          if (-not $SignedExe) {
+            $SignedZip = Get-ChildItem -Path $SignedDir -Recurse -File -Filter "*.zip" | Select-Object -First 1
+            if ($SignedZip) {
+              $ExtractDir = Join-Path $SignedDir "extracted"
+              Expand-Archive -LiteralPath $SignedZip.FullName -DestinationPath $ExtractDir -Force
+              $SignedExe = Get-ChildItem -Path $ExtractDir -Recurse -File -Filter $SetupName | Select-Object -First 1
+            }
+          }
+          if (-not $SignedExe) {
+            throw "SignPath did not produce expected signed installer: $SetupName"
+          }
+          $Sig = Get-AuthenticodeSignature -FilePath $SignedExe.FullName
+          if ($Sig.Status -ne "Valid") {
+            throw "Authenticode signature verification failed for $($SignedExe.Name): $($Sig.Status) ($($Sig.StatusMessage))"
+          }
+          $TargetExe = Join-Path "dist/installer" $SetupName
+          Copy-Item -LiteralPath $SignedExe.FullName -Destination $TargetExe -Force
+          $Hash = (Get-FileHash -Path $TargetExe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$Hash  $SetupName" | Out-File -FilePath "$TargetExe.sha256" -Encoding utf8
+          "$Hash  $SetupName" | Out-File -FilePath "dist/installer/SHA256SUMS.txt" -Encoding utf8
+          Write-Host "Signed installer verified and SHA256SUMS.txt recomputed: $Hash  $SetupName"
+
+      - name: Publish GitHub Release (Setup.exe + SHA256SUMS.txt)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/installer/GenshinHelper-Setup-v*.exe
+            dist/installer/SHA256SUMS.txt
+
+      - name: Upload workflow artifact (manual dispatch preview)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: GenshinHelper-Setup
+          path: |
+            dist/installer/GenshinHelper-Setup-v*.exe
+            dist/installer/SHA256SUMS.txt
+          if-no-files-found: error

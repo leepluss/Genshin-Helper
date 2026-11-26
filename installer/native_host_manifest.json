@@ -1,0 +1,9 @@
+{
+  "name": "com.genshinhelper.host",
+  "description": "Genshin Helper Native Messaging Host (Wake & Control Desktop Sync Server)",
+  "path": "GenshinHelperHost.exe",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://nfkijdoblmphmdljfogooajhbldkeojh/"
+  ]
+}

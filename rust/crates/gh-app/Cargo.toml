@@ -1,0 +1,40 @@
+[package]
+name = "gh-app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "GenshinHelper"
+path = "src/main.rs"
+
+[dependencies]
+gh-core.workspace = true
+gh-win32.workspace = true
+gh-net.workspace = true
+gh-cv.workspace = true
+gh-hud.workspace = true
+
+clap.workspace = true
+image.workspace = true
+ndarray.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tower-http.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+zip.workspace = true
+
+[dependencies.windows]
+workspace = true
+features = [
+    "Win32_Foundation",
+    "Win32_System_SystemInformation",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+]
+
+[build-dependencies]
+winresource.workspace = true

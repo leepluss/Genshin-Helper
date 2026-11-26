@@ -1,0 +1,42 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Scratch directory (temporary debug & test scripts)
+scratch/
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# GitNexus local index cache
+.gitnexus/
+
+# Logs
+*.log
+
+# Build & release artifacts
+build/
+dist/
+/.cargo/config.toml
+
+# Local user config & downloaded HoYoLAB map datasets (hydrated into local cache on first run)
+config.json
+/data/
+
+# Local machine-only agent notes & skill caches (private maintainer ops / local AI tooling)
+GEMINI.md
+CLAUDE.local.md
+.agents/
+.claude/
+.impeccable/
+
+

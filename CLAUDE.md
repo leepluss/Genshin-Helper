@@ -1,0 +1,59 @@
+<!-- gitnexus:start -->
+# GitNexus — Code Intelligence
+
+This project is indexed by GitNexus as **Genshin-Helper** (9318 symbols, 23428 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+
+> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+
+## Always Do
+
+- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
+- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
+- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
+- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
+- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
+
+## Never Do
+
+- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
+- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
+- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
+- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
+
+## Resources
+
+| Resource | Use for |
+|----------|---------|
+| `gitnexus://repo/Genshin-Helper/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/Genshin-Helper/clusters` | All functional areas |
+| `gitnexus://repo/Genshin-Helper/processes` | All execution flows |
+| `gitnexus://repo/Genshin-Helper/process/{name}` | Step-by-step execution trace |
+
+## CLI
+
+| Task | Read this skill file |
+|------|---------------------|
+| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
+| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
+| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
+| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
+| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+
+<!-- gitnexus:end -->
+
+## Project Invariants
+
+- **Pure-Rust 7-crate workspace (`rust/`) & single canonical release output**: Verify the backend via `cargo nextest run --manifest-path rust/Cargo.toml --workspace` and `cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings`. Keep intermediate Cargo build cache out of `rust/target` (via gitignored `/.cargo/config.toml` external `target-dir`; `Test-Path rust/target` must stay `False`). **Single runnable deliverable rule**: whenever the user asks to build the app or produce a release/test build, ALWAYS run `.\installer\build_release.ps1` so the single canonical output `dist\GenshinHelper\` (`GenshinHelper.exe`, `GenshinHelperHost.exe`) and `dist\installer\` are updated together — NEVER satisfy a build request with bare `cargo build --release` alone (which only refreshes `CARGO_TARGET_DIR` and leaves `dist\GenshinHelper\GenshinHelper.exe` stale) and NEVER build or copy binaries to alternate/extra output directories; if `dist\GenshinHelper\GenshinHelper.exe` is locked by a running process, stop and ask the user to close it first. Use `.\.venv\Scripts\python.exe` for stdlib release/audit/black-box scripts (`scripts/audit_release.py`, `scripts/collect_licenses.py`, `tests/verify_i18n_and_ext_v5.py`, `tests/test_blackbox_contracts.py`) and optional `cv-bench` Python-oracle parity (`cv2`/`numpy`).
+- **Offline verification fixtures & static assets**: `assets/` holds the 4 tracked non-IP static assets (`assets/data/category_aliases.json`, `assets/locales/{vi,en}.json`, `assets/zoom_thumb_template.png`) plus `assets/icons/*`. Gitignored local dev datasets live in `data/` (`multimap_v4.json`, `terrain_n2_v4.npz`, `cave_masks_v4.npz`, `ui_anchors_v4.npz`) — never stage `.npz` inside `assets/`. Preserve gitignored `scratch/` fixtures (`diagnostics/`, `Test-images/`, `minimap_rec/`, `yt_bench/`, `0zoom.png`, `100zoom.png`, `ocr_query_*.png`).
+- **Multi-tab lossless sync (`gh-net::sync_server`)**: `/poll?since=<seq>` uses a monotonic `_event_seq` + `_event_log` ring buffer (`32 MiB` body limit, `/shutdown` loopback POST-only `403`, port takeover) so background HoYoLAB tabs or overlapping polls never steal teleport events; do not revert to destructive single-consumer pops.
+- **Zoom slider anti-false-positive (`gh-cv::zoom_slider`, `gh-cv::map_state`)**: Diamond thumb detection must verify both `TM_CCORR_NORMED` and zero-mean `TM_CCOEFF_NORMED` (`>= 0.65`); `TM_CCORR_NORMED` alone saturates on flat bright panels (region drawer) and triggers false map-open events.
+- **World alignment & compass rejection (`gh-cv::locator`)**: `terrain_data` Sobel refinement (with `WORLD_ANCHOR_Y_OFFSET = -8.5` fallback on maps `2, 9, 34, 36`, plus per-label screen offsets and `2.78 px` arrow pivot @1440p) corrects Genshin's waypoint foot-anchor vs HoYoLAB's center-anchor offset; `detect_player_arrow` rejects off-screen edge compass badges.
+- **Map datasets (`data/*_v4.*`, `%LOCALAPPDATA%\GenshinHelper\data`)**: Hydrate and refresh from HoYoLAB public API via `GenshinHelper.exe --sync-data` (and `gh-net::hoyolab_sync` `check_online_map_versions` on startup).
+- **Off-store pinned Extension ID (`extension/manifest.json`)**: Keep the RSA-2048 SPKI `"key"` (ID `nfkijdoblmphmdljfogooajhbldkeojh`) synchronized with `installer/native_host_manifest.json`, `installer/GenshinHelper.iss`, `gh-core::PINNED_EXTENSION_ID`, and `tests/test_blackbox_contracts.py`.
+- **Read-only Win32 bindings & zero `SendInput` (`gh-win32::{hotkey,capture}`)**: Keep typed `windows` (`windows-rs`) bindings for `SetWindowsHookExW`/`WH_KEYBOARD_LL`/`WH_MOUSE_LL` and GDI `SRCCOPY` capture; never use `SendInput` against the game window.
+- **V5.3 live minimap engine (`gh-net::hd_assets`, `gh-cv::global_relocator`, `gh-cv::minimap_tracker`)**: Keep `HoyolabHdTileProvider`/`UndergroundOverlayProvider` non-blocking (`async_fetch=True`), check `TeyvatGlobalRelocator.is_ready` before incrementing global query counters (`INDEX_VERSION = 3`), preserve Follow-View `-theta_mm_to_ref` sign conversion, and keep runtime Paimon auto-bootstrap IP-clean in `%LOCALAPPDATA%\GenshinHelper\cache\paimon_tpl.npz` (skipping `hd_sobel_fast` until bootstrap completes); verify with `cargo nextest run --manifest-path rust/Cargo.toml --workspace --profile cv-heavy --cargo-profile cv-bench --run-ignored all`.
+- **Smart hotkey suppression & capture-visible Mini-HUD (`gh-win32::{hotkey,hotkey_conflicts}`, `gh-hud::layered`, `gh-win32::capture`)**: Keep `HOTKEY_NAV_MARK`/`HOTKEY_NAV_UNDO` defaults off Genshin's always-triggered menu keys (`alt+k`/`alt+shift+k`), suppress only the trigger VK in `WH_KEYBOARD_LL` (never modifiers, zero `SendInput`, gated by foreground game/HUD), isolate `NvidiaOverlayAdapter` tests with temp paths + `write_registry=false`, and toggle `WDA_NONE`/`WDA_EXCLUDEFROMCAPTURE` via `WM_APP_CAPTURE_AFFINITY` (`0x8015`) + `_NON_COVERING_CLASSES`/`_NON_COVERING_PROCESSES`.
+- **Bilingual HUD/Guide caching & release hygiene (`gh-net::pin_guide`, `gh-hud::nav_hud`, `gh-core::assets`, `gh-net::hoyolab_sync`, `installer/build_release.ps1`)**: Key `PinGuideFetcher` cache/pending/inflight by `(lang_tag, pin_id)` and wire `HoYoLABLabelCatalog` so switching Popup language refreshes HUD pin titles, Guide Cards, and map names; keep first-run hydration in-process (`multimap_v4.json`, `terrain_n2_v4.npz`, `cave_masks_v4.npz`, `ui_anchors_v4.npz` optional via slider-probe fallback), and bundle Cargo licenses + run `scripts/audit_release.py --strict-ip --artifact dist/GenshinHelper` + `--dir rust --strict-ip` before Inno Setup compiles the Setup `.exe`.
+- **Extension Control Center popup (`extension/popup.html`, `extension/popup.css`, `extension/popup.js`, `extension/i18n.js`)**: Keep `extension/**` immutable unless explicitly requested; keep the fixed `520×580px` 2-column Celestial Observatory layout (`DESIGN.md`), wrap icon-bearing button labels in `.btn-label` updated via `setBtnLabel()` (never raw `btn.textContent`), keep the `if (!ready) return;` guard in `i18n.js` `applyDom()`, and preserve all DOM IDs and `VI | EN` parity verified by `.\.venv\Scripts\python.exe tests/verify_i18n_and_ext_v5.py`.
+- **Local maintainer ops & commit/push hygiene (gitignored `GEMINI.md` / `CLAUDE.local.md`)**: Keep private/maintainer operational IDs (Discord server, channels, roles, bot/owner IDs) strictly in gitignored `GEMINI.md` (imported by `CLAUDE.local.md`) so they never enter `git status`, commits, or public pushes; read `GEMINI.md` if present before asking the user for local ops IDs, and before committing/pushing run `gitnexus_detect_changes()` + `.\.venv\Scripts\python.exe scripts/audit_release.py --strict-ip` and stage files by explicit path only.

@@ -1,0 +1,11 @@
+{
+    "hotkey": "alt+f11",
+    "hotkey_sync": "alt+f11",
+    "hotkey_debug": "alt+f12",
+    "hotkey_switch": "alt+q",
+    "chest_search_radius": 30.0,
+    "ws_port": 8765,
+    "auto_sync_m": true,
+    "single_monitor_mode": false,
+    "instructions": "Copy to config.json and customize hotkeys (e.g. mouse4, mouse5, middle, alt+f11, alt+f12, alt+q, f10). You can also edit settings from the Browser Extension popup."
+}

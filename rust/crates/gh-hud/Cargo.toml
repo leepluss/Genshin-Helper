@@ -1,0 +1,32 @@
+[package]
+name = "gh-hud"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+gh-core.workspace = true
+gh-win32.workspace = true
+tiny-skia.workspace = true
+cosmic-text.workspace = true
+image.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dependencies.windows]
+workspace = true
+features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_WindowsAndMessaging",
+]
+
+[dev-dependencies.windows]
+workspace = true
+features = [
+    "Win32_System_Threading",
+    "Win32_UI_WindowsAndMessaging",
+]

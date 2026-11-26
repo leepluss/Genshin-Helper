@@ -1,0 +1,426 @@
+{
+  "schema_version": 1,
+  "description": "Declarative N:1 HoYoLAB label_id normalization and cross-map category mappings for Genshin-Helper v5 Cross-Map Pin Bridge.",
+  "default_map_affines": {
+    "kongying": {
+      "2": {
+        "name": "Teyvat (twt40 empirical seed)",
+        "ax": 1.3333333333333333,
+        "bx": 1523.4,
+        "cy": 1.3333333333333333,
+        "dy": -3921.6,
+        "source": "seed_twt40",
+        "note": "Teyvat map_id=2 only. Sub-maps (Enkanomiya=7, Chasm=9, Sea of Bygone Eras=34, etc.) must be calibrated per map_id via shared Waypoint/Statue anchors."
+      }
+    }
+  },
+  "categories": {
+    "statue_of_the_seven": {
+      "group": "landmark",
+      "is_calibration_anchor": true,
+      "primary_hoyolab_label_id": 2,
+      "hoyolab_label_ids": [2],
+      "appsample_code": "o2",
+      "kongying_names": ["七天神像", "Statue of The Seven", "Thất Thiên Thần Tượng"],
+      "genshinmap_keys": [
+        "StatueOfTheSeven",
+        "MondstadtStatueOfTheSeven",
+        "LiyueStatueOfTheSeven",
+        "InazumaStatueOfTheSeven",
+        "SumeruStatueOfTheSeven",
+        "FontaineStatueOfTheSeven",
+        "NatlanStatueOfTheSeven"
+      ],
+      "name_aliases": [
+        "statue of the seven",
+        "statue of seven",
+        "thất thiên thần tượng",
+        "七天神像"
+      ]
+    },
+    "teleport_waypoint": {
+      "group": "landmark",
+      "is_calibration_anchor": true,
+      "primary_hoyolab_label_id": 3,
+      "hoyolab_label_ids": [3],
+      "appsample_code": "o3",
+      "kongying_names": ["传送锚点", "Teleport Waypoint", "Điểm dịch chuyển"],
+      "genshinmap_keys": [
+        "Teleporter",
+        "TeleportWaypoint",
+        "MondstadtTeleporter",
+        "LiyueTeleporter",
+        "InazumaTeleporter",
+        "SumeruTeleporter",
+        "FontaineTeleporter",
+        "NatlanTeleporter"
+      ],
+      "name_aliases": [
+        "teleport waypoint",
+        "teleporter",
+        "waypoint",
+        "điểm dịch chuyển",
+        "传送锚点"
+      ]
+    },
+    "domain": {
+      "group": "landmark",
+      "is_calibration_anchor": true,
+      "primary_hoyolab_label_id": 154,
+      "hoyolab_label_ids": [154],
+      "appsample_code": "o154",
+      "kongying_names": ["秘境", "Domain", "Bí Cảnh"],
+      "genshinmap_keys": [
+        "Domain",
+        "MondstadtDomain",
+        "LiyueDomain",
+        "InazumaDomain",
+        "SumeruDomain",
+        "FontaineDomain",
+        "NatlanDomain"
+      ],
+      "name_aliases": [
+        "domain",
+        "bí cảnh",
+        "秘境"
+      ]
+    },
+    "shrine_of_depths": {
+      "group": "collectible",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 8,
+      "hoyolab_label_ids": [8, 9, 212, 411, 509, 577],
+      "appsample_code": "o8",
+      "kongying_names": [
+        "地灵龛",
+        "蒙德地灵龛",
+        "璃月地灵龛",
+        "稻妻地灵龛",
+        "须弥地灵龛",
+        "枫丹地灵龛",
+        "纳塔地灵龛",
+        "Shrine of Depths",
+        "Đền Địa Linh"
+      ],
+      "genshinmap_keys": [
+        "ShrineOfDepths",
+        "MondstadtShrineOfDepths",
+        "LiyueShrineOfDepths",
+        "InazumaShrineOfDepths",
+        "SumeruShrineOfDepths",
+        "FontaineShrineOfDepths",
+        "NatlanShrineOfDepths"
+      ],
+      "name_aliases": [
+        "shrine of depths",
+        "mondstadt shrine of depths",
+        "liyue shrine of depths",
+        "inazuma shrine of depths",
+        "sumeru shrine of depths",
+        "fontaine shrine of depths",
+        "natlan shrine of depths",
+        "đền địa linh",
+        "地灵龛"
+      ]
+    },
+    "seelie": {
+      "group": "puzzle",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 18,
+      "hoyolab_label_ids": [18, 148],
+      "appsample_code": "o18",
+      "kongying_names": ["仙灵", "温暖仙灵", "Seelie", "Warming Seelie", "Tiên Linh", "Tiên Linh Ấm Áp"],
+      "genshinmap_keys": [
+        "Seelie",
+        "WarmingSeelie",
+        "MondstadtSeelie",
+        "LiyueSeelie",
+        "DragonspineSeelie",
+        "InazumaSeelie",
+        "SumeruSeelie",
+        "FontaineSeelie",
+        "NatlanSeelie"
+      ],
+      "name_aliases": [
+        "seelie",
+        "warming seelie",
+        "tiên linh",
+        "tiên linh ấm áp",
+        "仙灵",
+        "温暖仙灵"
+      ]
+    },
+    "electro_seelie": {
+      "group": "puzzle",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 217,
+      "hoyolab_label_ids": [217],
+      "appsample_code": "o217",
+      "kongying_names": ["雷灵", "Electro Seelie", "Lôi Linh"],
+      "genshinmap_keys": ["ElectroSeelie", "InazumaElectroSeelie"],
+      "name_aliases": [
+        "electro seelie",
+        "lôi linh",
+        "雷灵"
+      ]
+    },
+    "time_trial_challenge": {
+      "group": "puzzle",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 17,
+      "hoyolab_label_ids": [17, 198, 224, 396, 513, 581],
+      "appsample_code": "o17",
+      "kongying_names": ["限时挑战", "Time Trial Challenge", "Khiêu Chiến Hạn Giờ"],
+      "genshinmap_keys": [
+        "TimeTrialChallenge",
+        "MondstadtTimeTrialChallenge",
+        "LiyueTimeTrialChallenge",
+        "InazumaTimeTrialChallenge",
+        "SumeruTimeTrialChallenge",
+        "FontaineTimeTrialChallenge",
+        "NatlanTimeTrialChallenge"
+      ],
+      "name_aliases": [
+        "time trial challenge",
+        "time trial",
+        "khiêu chiến hạn giờ",
+        "限时挑战"
+      ]
+    },
+    "common_chest": {
+      "group": "chest",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 44,
+      "hoyolab_label_ids": [44],
+      "appsample_code": "o44",
+      "kongying_names": ["普通宝箱", "Common Chest", "Rương Thường"],
+      "genshinmap_keys": [
+        "CommonChest",
+        "ChestCommon",
+        "MondstadtCommonChest",
+        "LiyueCommonChest",
+        "InazumaCommonChest",
+        "SumeruCommonChest",
+        "FontaineCommonChest",
+        "NatlanCommonChest"
+      ],
+      "name_aliases": [
+        "common chest",
+        "rương thường",
+        "普通宝箱"
+      ]
+    },
+    "exquisite_chest": {
+      "group": "chest",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 45,
+      "hoyolab_label_ids": [45],
+      "appsample_code": "o45",
+      "kongying_names": ["精致宝箱", "Exquisite Chest", "Rương Tinh Xảo"],
+      "genshinmap_keys": [
+        "ExquisiteChest",
+        "ChestExquisite",
+        "MondstadtExquisiteChest",
+        "LiyueExquisiteChest",
+        "InazumaExquisiteChest",
+        "SumeruExquisiteChest",
+        "FontaineExquisiteChest",
+        "NatlanExquisiteChest"
+      ],
+      "name_aliases": [
+        "exquisite chest",
+        "rương tinh xảo",
+        "精致宝箱"
+      ]
+    },
+    "precious_chest": {
+      "group": "chest",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 46,
+      "hoyolab_label_ids": [46],
+      "appsample_code": "o46",
+      "kongying_names": ["珍贵宝箱", "Precious Chest", "Rương Siêu Cấp"],
+      "genshinmap_keys": [
+        "PreciousChest",
+        "ChestPrecious",
+        "MondstadtPreciousChest",
+        "LiyuePreciousChest",
+        "InazumaPreciousChest",
+        "SumeruPreciousChest",
+        "FontainePreciousChest",
+        "NatlanPreciousChest"
+      ],
+      "name_aliases": [
+        "precious chest",
+        "rương siêu cấp",
+        "rương quý hiếm",
+        "珍贵宝箱"
+      ]
+    },
+    "luxurious_chest": {
+      "group": "chest",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 64,
+      "hoyolab_label_ids": [64],
+      "appsample_code": "o64",
+      "kongying_names": ["华丽宝箱", "Luxurious Chest", "Rương Hiếm"],
+      "genshinmap_keys": [
+        "LuxuriousChest",
+        "ChestLuxurious",
+        "MondstadtLuxuriousChest",
+        "LiyueLuxuriousChest",
+        "InazumaLuxuriousChest",
+        "SumeruLuxuriousChest",
+        "FontaineLuxuriousChest",
+        "NatlanLuxuriousChest"
+      ],
+      "name_aliases": [
+        "luxurious chest",
+        "rương hiếm",
+        "rương hoa lệ",
+        "华丽宝箱"
+      ]
+    },
+    "remarkable_chest": {
+      "group": "chest",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 236,
+      "hoyolab_label_ids": [236],
+      "appsample_code": "o236",
+      "kongying_names": ["奇馈宝箱", "Remarkable Chest", "Rương Kỳ Dị"],
+      "genshinmap_keys": [
+        "RemarkableChest",
+        "ChestRemarkable",
+        "InazumaRemarkableChest",
+        "SumeruRemarkableChest",
+        "FontaineRemarkableChest",
+        "NatlanRemarkableChest"
+      ],
+      "name_aliases": [
+        "remarkable chest",
+        "rương kỳ dị",
+        "奇馈宝箱"
+      ]
+    },
+    "anemoculus": {
+      "group": "oculus",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 5,
+      "hoyolab_label_ids": [5],
+      "appsample_code": "o5",
+      "kongying_names": ["风神瞳", "Anemoculus", "Phong Thần Đồng"],
+      "genshinmap_keys": ["Anemoculus", "MondstadtAnemoculus"],
+      "name_aliases": ["anemoculus", "phong thần đồng", "风神瞳"]
+    },
+    "geoculus": {
+      "group": "oculus",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 6,
+      "hoyolab_label_ids": [6],
+      "appsample_code": "o6",
+      "kongying_names": ["岩神瞳", "Geoculus", "Nham Thần Đồng"],
+      "genshinmap_keys": ["Geoculus", "LiyueGeoculus"],
+      "name_aliases": ["geoculus", "nham thần đồng", "岩神瞳"]
+    },
+    "crimson_agate": {
+      "group": "oculus",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 147,
+      "hoyolab_label_ids": [147],
+      "appsample_code": "o147",
+      "kongying_names": ["绯红玉髓", "Crimson Agate", "Mã Não Đỏ Thẫm"],
+      "genshinmap_keys": ["CrimsonAgate", "DragonspineCrimsonAgate"],
+      "name_aliases": ["crimson agate", "mã não đỏ thẫm", "绯红玉髓"]
+    },
+    "electroculus": {
+      "group": "oculus",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 210,
+      "hoyolab_label_ids": [210],
+      "appsample_code": "o210",
+      "kongying_names": ["雷神瞳", "Electroculus", "Lôi Thần Đồng"],
+      "genshinmap_keys": ["Electroculus", "InazumaElectroculus"],
+      "name_aliases": ["electroculus", "lôi thần đồng", "雷神瞳"]
+    },
+    "lumenspar": {
+      "group": "oculus",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 345,
+      "hoyolab_label_ids": [345],
+      "appsample_code": "o345",
+      "kongying_names": ["流明晶石", "Lumenspar", "Lưu Minh Tinh Thạch"],
+      "genshinmap_keys": ["Lumenspar", "ChasmLumenspar"],
+      "name_aliases": ["lumenspar", "lumenstone", "lưu minh tinh thạch", "流明晶石"]
+    },
+    "dendroculus": {
+      "group": "oculus",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 395,
+      "hoyolab_label_ids": [395],
+      "appsample_code": "o395",
+      "kongying_names": ["草神瞳", "Dendroculus", "Thảo Thần Đồng"],
+      "genshinmap_keys": ["Dendroculus", "SumeruDendroculus"],
+      "name_aliases": ["dendroculus", "thảo thần đồng", "草神瞳"]
+    },
+    "hydroculus": {
+      "group": "oculus",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 508,
+      "hoyolab_label_ids": [508],
+      "appsample_code": "o508",
+      "kongying_names": ["水神瞳", "Hydroculus", "Thủy Thần Đồng"],
+      "genshinmap_keys": ["Hydroculus", "FontaineHydroculus"],
+      "name_aliases": ["hydroculus", "thủy thần đồng", "水神瞳"]
+    },
+    "spirit_carp": {
+      "group": "oculus",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 559,
+      "hoyolab_label_ids": [559],
+      "appsample_code": "o559",
+      "kongying_names": ["苍灵鲤", "Spirit Carp", "Thương Linh Lý"],
+      "genshinmap_keys": ["SpiritCarp", "ChenyuSpiritCarp"],
+      "name_aliases": ["spirit carp", "thương linh lý", "苍灵鲤"]
+    },
+    "pyroculus": {
+      "group": "oculus",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 575,
+      "hoyolab_label_ids": [575],
+      "appsample_code": "o575",
+      "kongying_names": ["火神瞳", "Pyroculus", "Hỏa Thần Đồng"],
+      "genshinmap_keys": ["Pyroculus", "NatlanPyroculus"],
+      "name_aliases": ["pyroculus", "hỏa thần đồng", "火神瞳"]
+    },
+    "viewpoint": {
+      "group": "collectible",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 151,
+      "hoyolab_label_ids": [151],
+      "appsample_code": "o151",
+      "kongying_names": ["观景点", "Viewpoint", "Điểm Ngắm Cảnh"],
+      "genshinmap_keys": ["Viewpoint"],
+      "name_aliases": ["viewpoint", "điểm ngắm cảnh", "观景点"]
+    },
+    "radiant_spincrystal": {
+      "group": "collectible",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 318,
+      "hoyolab_label_ids": [318],
+      "appsample_code": "o318",
+      "kongying_names": ["旋曜玉帛", "Radiant Spincrystal", "Ngọc Thạch Rực Rỡ"],
+      "genshinmap_keys": ["RadiantSpincrystal"],
+      "name_aliases": ["radiant spincrystal", "spincrystal", "ngọc thạch rực rỡ", "旋曜玉帛"]
+    },
+    "monetoo": {
+      "group": "puzzle",
+      "is_calibration_anchor": false,
+      "primary_hoyolab_label_id": 583,
+      "hoyolab_label_ids": [583],
+      "appsample_code": "o583",
+      "kongying_names": ["幻写灵", "Monetoo", "Huyễn Tả Linh"],
+      "genshinmap_keys": ["Monetoo", "NatlanMonetoo"],
+      "name_aliases": ["monetoo", "huyễn tả linh", "幻写灵"]
+    }
+  }
+}

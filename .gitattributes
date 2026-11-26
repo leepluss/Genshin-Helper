@@ -1,0 +1,2 @@
+# Preserve CRLF line endings required by CI check on extension/page_main.js
+extension/page_main.js text eol=crlf

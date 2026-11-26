@@ -1,0 +1,58 @@
+[package]
+name = "gh-win32"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+gh-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dependencies.windows]
+workspace = true
+features = [
+    # Core Win32 types, handles, errors
+    "Win32_Foundation",
+    # M2a: capture.rs (GDI SRCCOPY, DIBSection, monitors, ClientToScreen, desktops)
+    "Win32_Graphics_Gdi",
+    "Win32_UI_HiDpi",
+    "Win32_System_StationsAndDesktops",
+    # P0.2: wgc_hdr.rs (DXGI HDR detection, DisplayConfig SDR white level, D3D11/WGC R16G16B16A16Float)
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Direct3D",
+    "Win32_Devices_Display",
+    "Win32_System_WinRT_Direct3D11",
+    "Win32_System_WinRT_Graphics_Capture",
+    "Graphics",
+    "Graphics_Capture",
+    "Graphics_DirectX",
+    "Graphics_DirectX_Direct3D11",
+    # M2a: hotkey.rs, hotkey_conflicts.rs, game_settings.rs, switcher.rs, tray.rs
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Diagnostics_ToolHelp",
+    # M2a: game_settings.rs (UIPI token & HoYoPlay registry) & runtime.rs (mutex, OpenProcess, AttachThreadInput)
+    "Win32_Security",
+    "Win32_System_Threading",
+    "Win32_System_Registry",
+    "Win32_System_SystemInformation",
+    "Win32_Media",
+    # M2b: audio.rs, tray.rs, locale.rs
+    "Win32_Media_Audio",
+    "Win32_UI_Shell",
+    "Win32_Globalization",
+    # M2b: win_ocr.rs (In-process WinRT OcrEngine)
+    "Win32_System_Com",
+    "Win32_System_WinRT",
+    "Foundation",
+    "Globalization",
+    "Graphics_Imaging",
+    "Media_Ocr",
+    "Security_Cryptography",
+    "Storage_Streams",
+]

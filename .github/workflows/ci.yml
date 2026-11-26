@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Windows Verification & Audit
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: Set up Python 3.12 (stdlib tooling)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run cargo clippy
+        run: cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings
+
+      - name: Run Rust workspace unit & integration tests (cargo-nextest)
+        run: cargo nextest run --manifest-path rust/Cargo.toml --workspace
+
+      - name: Build release binaries for black-box contract suite
+        run: cargo build --manifest-path rust/Cargo.toml --release -p gh-app -p gh-host
+
+      - name: Compile-check retained Python scripts & contract tests
+        run: |
+          $env:PYTHONUTF8 = "1"
+          $files = @(Get-ChildItem -Recurse -Include *.py -Path scripts, tests)
+          foreach ($file in $files) {
+            python -m py_compile $file.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          Write-Host "Compiled $($files.Count) Python files successfully."
+
+      - name: Syntax-check Extension JS and CRLF invariants
+        run: |
+          node --check extension/page_main.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check extension/background.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check extension/popup.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check extension/content_bridge.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check extension/i18n.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check extension/i18n_bridge.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check extension/route_hook.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -c "b=open('extension/page_main.js','rb').read(); assert b.count(b'\r\n') == b.count(b'\n'); assert b'setIcon(' not in b"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify bilingual i18n & Extension v5
+        run: |
+          $env:PYTHONUTF8 = "1"
+          python tests/verify_i18n_and_ext_v5.py
+
+      - name: Run Black-Box Contract Test Suite against Rust EXEs
+        run: |
+          $env:PYTHONUTF8 = "1"
+          $env:GH_TEST_HOST_COLD_LAUNCH = "1"
+          $env:GH_HOST_SKIP_SCHTASKS = "1"
+          $TargetDir = ((cargo metadata --manifest-path rust/Cargo.toml --no-deps --format-version 1 | ConvertFrom-Json).target_directory)
+          $ServerExe = Join-Path $TargetDir "release\GenshinHelper.exe"
+          $HostExe = Join-Path $TargetDir "release\GenshinHelperHost.exe"
+          python tests/test_blackbox_contracts.py --backend rust --server-exe $ServerExe --host-exe $HostExe -v
+
+      - name: Run release privacy & strict IP audit
+        run: |
+          $env:PYTHONUTF8 = "1"
+          python scripts/audit_release.py --strict-ip
+          python scripts/audit_release.py --dir rust --strict-ip
+
+      - name: Audit Cargo dependency licenses (strict)
+        run: |
+          $env:PYTHONUTF8 = "1"
+          python scripts/collect_licenses.py --cargo-manifest rust/Cargo.toml --strict

@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>Genshin Helper — LAN Companion</title>
+<style>
+  :root{
+    --bg:#121318;--panel:#191b24;--panel2:#222534;--border:#2d3244;
+    --fg:#eef1f8;--muted:#9aa3b2;--accent:#bb86fc;--ok:#4ade80;--warn:#facc15;--err:#ff6b6b;--tp:#38bdf8
+  }
+  *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none}
+  html,body{margin:0;padding:0;width:100%;max-width:100vw;height:100%;overflow:hidden;position:fixed;inset:0;overscroll-behavior:none;touch-action:none;background:var(--bg);color:var(--fg)}
+  #app{display:flex;flex-direction:column;width:100%;max-width:100vw;height:100dvh;overflow:hidden;position:relative;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  header{
+    display:flex;align-items:center;justify-content:space-between;gap:4px;min-width:0;width:100%;overflow:hidden;
+    padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--border);z-index:20;flex-shrink:0
+  }
+  .brand{display:flex;align-items:center;gap:6px;min-width:0;flex-shrink:1}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--warn);flex-shrink:0}
+  .dot.ok{background:var(--ok)}
+  .dot.err{background:var(--err)}
+  .status-txt{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:86px}
+  .map-pill{
+    display:inline-flex;align-items:center;gap:4px;background:#11131a;border:1px solid var(--border);
+    border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--fg);
+    max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+  }
+  .controls{display:flex;align-items:center;gap:4px;flex-shrink:0}
+  .pill{background:#242736;border:1px solid var(--border);color:var(--fg);border-radius:8px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .pill.active{border-color:var(--accent);color:var(--accent);background:rgba(187,134,252,.12)}
+  @media (max-width:440px){
+    .status-txt{display:none}
+    .map-pill{font-size:11px;padding:4px 8px;max-width:120px}
+    .pill{font-size:11px;padding:5px 7px}
+  }
+
+  main{position:relative;flex:1;overflow:hidden;background:var(--bg)}
+  .view-pane{position:absolute;inset:0;width:100%;height:100%}
+  .view-pane[hidden]{display:none!important}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+
+  .hud-top{position:absolute;left:10px;top:10px;display:flex;flex-direction:column;gap:5px;pointer-events:none;z-index:10;max-width:74%}
+  .badge-row{display:flex;flex-wrap:wrap;gap:5px;pointer-events:auto}
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;background:rgba(20,22,30,.88);
+    border:1px solid var(--border);border-radius:9px;padding:5px 9px;font-size:11px;font-weight:600;
+    backdrop-filter:blur(6px);pointer-events:none
+  }
+  .badge.click{pointer-events:auto;cursor:pointer}
+  .chips-bar{
+    position:absolute;left:10px;right:60px;top:74px;display:flex;gap:6px;overflow-x:auto;
+    padding:2px 0;z-index:10;scrollbar-width:none
+  }
+  .chips-bar::-webkit-scrollbar{display:none}
+  .chips-bar[hidden]{display:none!important}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;flex-shrink:0;
+    background:rgba(24,26,36,.92);border:1px solid var(--border);border-radius:999px;
+    padding:4px 9px;font-size:11px;font-weight:600;color:var(--fg);cursor:pointer
+  }
+  .chip.active{border-color:var(--accent);background:rgba(187,134,252,.18);color:#f3e8ff}
+  .chip img{width:14px;height:14px;border-radius:50%;object-fit:contain}
+
+  .fab-col{position:absolute;right:10px;bottom:14px;display:flex;flex-direction:column;gap:7px;z-index:11}
+  .fab{
+    width:40px;height:40px;border-radius:11px;border:1px solid var(--border);
+    background:rgba(24,26,36,.92);color:var(--fg);font-size:17px;font-weight:700;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)
+  }
+  .fab.accent{border-color:rgba(187,134,252,.5);color:var(--accent)}
+
+  .sheet{
+    position:absolute;left:10px;right:10px;bottom:10px;z-index:30;
+    background:rgba(21,24,34,.96);border:1px solid var(--border);border-radius:14px;
+    padding:12px;box-shadow:0 12px 34px rgba(0,0,0,.62);backdrop-filter:blur(10px);
+    display:flex;flex-direction:column;gap:9px;max-height:56%;overflow:hidden
+  }
+  .sheet[hidden]{display:none!important}
+  .sheet-head{display:flex;align-items:center;gap:10px;min-width:0}
+  .sheet-ico{
+    width:32px;height:32px;border-radius:50%;object-fit:contain;
+    background:#11141e;border:1px solid var(--border);flex-shrink:0;padding:2px
+  }
+  .sheet-ico[hidden]{display:none!important}
+  .sheet-meta{flex:1;min-width:0}
+  .sheet-title{font-size:14px;font-weight:700;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sheet-sub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sheet-close{
+    width:30px;height:30px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);
+    color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center
+  }
+  .sheet-body{
+    flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    display:flex;flex-direction:column;gap:8px;font-size:12px;line-height:1.45;color:#d6dce8;
+    touch-action:pan-y;user-select:text
+  }
+  .sheet-guide-img{
+    width:100%;max-height:165px;object-fit:cover;border-radius:9px;border:1px solid var(--border);
+    background:#0d0f16;cursor:zoom-in;flex-shrink:0
+  }
+  .sheet-guide-img[hidden]{display:none!important}
+  .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:2px;flex-shrink:0}
+  .sbtn{
+    padding:9px 6px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);
+    color:var(--fg);font-size:12px;font-weight:700;cursor:pointer;text-align:center
+  }
+  .sbtn.mark{background:rgba(74,222,128,.18);border-color:rgba(74,222,128,.55);color:#bbf7d0}
+  .sbtn.unmark{background:rgba(248,113,113,.16);border-color:rgba(248,113,113,.5);color:#fecaca}
+  .sbtn.target{background:rgba(187,134,252,.18);border-color:rgba(187,134,252,.55);color:#e9d5ff}
+
+  .toast{
+    position:absolute;left:50%;top:56px;transform:translateX(-50%);background:rgba(20,22,30,.95);
+    border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;
+    z-index:40;pointer-events:none;opacity:0;transition:opacity .18s
+  }
+  .toast.show{opacity:1}
+
+  .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+  .lightbox[hidden]{display:none!important}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:10px}
+
+  footer{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:7px 11px;background:var(--panel);border-top:1px solid var(--border);font-size:12px;color:var(--muted);flex-shrink:0
+  }
+  .target{color:var(--fg);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <span id="statusDot" class="dot"></span>
+      <span id="statusText" class="status-txt">Đang kết nối...</span>
+      <span id="mapPill" class="map-pill">Bản đồ HD</span>
+    </div>
+    <div class="controls">
+      <button id="btnFollow" class="pill active" type="button">Theo dõi</button>
+      <button id="btnLang" class="pill" type="button">VI</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 60 FPS Native HD Interactive Map -->
+    <section id="paneHd" class="view-pane">
+      <canvas id="hdCanvas"></canvas>
+      <div class="hud-top">
+        <div class="badge" id="coordBadge">Lat: -- | Lng: --</div>
+        <div class="badge-row">
+          <button class="badge click" id="floorBadgeBtn" type="button">Tầng: Mặt đất</button>
+          <button class="badge click" id="filterToggleBtn" type="button">Bộ lọc</button>
+        </div>
+      </div>
+      <div id="chipsBar" class="chips-bar" hidden></div>
+      <div id="routeChipsBar" class="chips-bar" style="top:110px" hidden></div>
+      <div class="fab-col">
+        <button class="fab" id="btnZoomIn" type="button">+</button>
+        <button class="fab" id="btnZoomOut" type="button">−</button>
+        <button class="fab" id="btnCenter" type="button">◎</button>
+        <button class="fab accent" id="btnUndoHd" type="button" title="Undo">↩</button>
+        <button class="fab accent" id="btnRouteHd" type="button" title="Route" hidden>🧭</button>
+      </div>
+    </section>
+
+    <div id="pinSheet" class="sheet" hidden>
+      <div class="sheet-head">
+        <img id="sheetIco" class="sheet-ico" alt=""/>
+        <div class="sheet-meta">
+          <div id="sheetTitle" class="sheet-title">Pin</div>
+          <div id="sheetSub" class="sheet-sub">--</div>
+        </div>
+        <button id="sheetClose" class="sheet-close" type="button">✕</button>
+      </div>
+      <div class="sheet-body">
+        <img id="sheetImg" class="sheet-guide-img" hidden alt=""/>
+        <div id="sheetDesc"></div>
+      </div>
+      <div class="sheet-actions">
+        <button id="btnSheetMark" class="sbtn mark" type="button">✓ Ghim</button>
+        <button id="btnSheetTarget" class="sbtn target" type="button">◎ Mục tiêu</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </main>
+
+  <footer>
+    <div class="target" id="targetLabel">Mục tiêu: —</div>
+    <button id="btnUnlockTarget" class="btn" type="button" hidden style="padding:2px 8px;font-size:11px;border-color:rgba(248,113,113,.55);color:#fca5a5;">✕ Hủy</button>
+    <div id="distLabel">-- m</div>
+  </footer>
+</div>
+
+<div id="lightbox" class="lightbox" hidden><img id="lightboxImg" alt=""/></div>
+
+<script>
+(() => {
+  const TOKEN = __GH_TOKEN_JSON__;
+  const I18N = {
+    vi: {
+      connecting:'Đang kết nối...', live:'LAN Live', offline:'Mất kết nối...',
+      modeHd:'Bản đồ HD', follow:'Theo dõi',
+      floor:'Tầng', surface:'Mặt đất', target:'Mục tiêu', none:'Không có',
+      filter:'Bộ lọc', allCats:'Tất cả', undo:'Hoàn tác', route:'Tuyến',
+      routeEmpty:'Chưa có tuyến đang mở', routeSelected:'Đã chọn chặng', routeReset:'↺ Đặt lại tuyến', routeResetOk:'Đã đặt lại tuyến về đầu chặng 1',
+      markBtn:'✓ Ghim', unmarkBtn:'✕ Bỏ ghim', targetBtn:'🧭 Dẫn đường', unlockBtn:'✕ Hủy dẫn đường', unlockShort:'✕ Hủy khóa', unlockedToast:'Đã hủy khóa dẫn đường',
+      guideLoading:'Đang tải hướng dẫn HoYoLAB...', guideEmpty:'Chưa có ảnh/mô tả cộng đồng cho điểm này.',
+      floorAll:'Tự động', ackOk:'Đã đồng bộ thao tác', ackFail:'Thao tác chưa hoàn tất'
+    },
+    en: {
+      connecting:'Connecting...', live:'LAN Live', offline:'Reconnecting...',
+      modeHd:'HD Map', follow:'Follow',
+      floor:'Floor', surface:'Surface', target:'Target', none:'None',
+      filter:'Filter', allCats:'All', undo:'Undo', route:'Route',
+      routeEmpty:'No active route loaded', routeSelected:'Switched section', routeReset:'↺ Reset', routeResetOk:'Route progress reset to S1',
+      markBtn:'✓ Mark', unmarkBtn:'✕ Unmark', targetBtn:'🧭 Navigate', unlockBtn:'✕ Cancel Nav', unlockShort:'✕ Unlock', unlockedToast:'Navigation lock cleared',
+      guideLoading:'Loading HoYoLAB guide...', guideEmpty:'No community guide image or notes.',
+      floorAll:'Auto', ackOk:'Action synced', ackFail:'Action did not complete'
+    }
+  };
+
+  let lang = (navigator.language || '').toLowerCase().startsWith('vi') ? 'vi' : 'en';
+  let follow = true;
+  let wsStatus = 'connecting';
+  let ws = null;
+
+  // Map projection & state
+  let currentMapId = 2;
+  const mapMetaCache = new Map();
+  let currentMeta = null;
+  let camLat = 0, camLng = 0, viewZ = -0.35;
+  let hasFix = false;
+  let lastAnchorSeq = null;
+  let lastWsMsgTs = performance.now();
+  let state = { lat:null, lng:null, heading:0, camera_heading:null, floor_name:'', floor_id:null, is_underground:false, map_id:2, target_pin:null, target_locked:false, nearby_pins:[], route_legs:[] };
+  let activeRoute = null;
+  let routeOpen = false;
+  let dispLat = 0, dispLng = 0, dispHdg = 0, dispCamHdg = null;
+
+  // Pins & icons & overlays
+  let allPins = [];
+  let pinById = new Map();
+  let catNameById = new Map();
+  let catList = [];
+  let filterCats = new Set(); // empty = all
+  let filterOpen = false;
+  let manualFloorOverride = null; // null = auto follow player, 'surface' = surface, or floor record
+  let selectedPin = null;
+
+  // Image caches
+  const tileCache = new Map(); // key -> { status:'loading'|'ok'|'err', img, ts }
+  const TILE_LIMIT = 220;
+  let tileInflight = 0;
+  const MAX_TILE_INFLIGHT = 8;
+  const tileQueue = [];
+  const iconCache = new Map(); // key -> Image|null|'loading'
+  const markerUiAssets = new Map(); // key -> Image
+  const MARKER_UI_KEYS = [
+    'marker_bg_normal',
+    'marker_bg_selected',
+    'marker_selected_frame',
+    'marker_ug_mark',
+    'marker_ug_mark_selected',
+    'marker_wh_mark',
+    'marker_wh_mark_selected',
+    'marker_z_upper',
+    'marker_z_middle',
+    'marker_z_lower',
+  ];
+  const overlayCache = new Map(); // key -> Image|null|'loading'
+  const guideCache = new Map();
+
+  // DOM refs
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const mapPill = document.getElementById('mapPill');
+  const btnFollow = document.getElementById('btnFollow');
+  const btnLang = document.getElementById('btnLang');
+  const paneHd = document.getElementById('paneHd');
+  const hdCanvas = document.getElementById('hdCanvas');
+  const hdCtx = hdCanvas.getContext('2d');
+  const coordBadge = document.getElementById('coordBadge');
+  const floorBadgeBtn = document.getElementById('floorBadgeBtn');
+  const filterToggleBtn = document.getElementById('filterToggleBtn');
+  const chipsBar = document.getElementById('chipsBar');
+  const routeChipsBar = document.getElementById('routeChipsBar');
+  const btnCenter = document.getElementById('btnCenter');
+  const btnRouteHd = document.getElementById('btnRouteHd');
+  const targetLabel = document.getElementById('targetLabel');
+  const distLabel = document.getElementById('distLabel');
+  const pinSheet = document.getElementById('pinSheet');
+  const sheetIco = document.getElementById('sheetIco');
+  const sheetTitle = document.getElementById('sheetTitle');
+  const sheetSub = document.getElementById('sheetSub');
+  const sheetImg = document.getElementById('sheetImg');
+  const sheetDesc = document.getElementById('sheetDesc');
+  const btnSheetMark = document.getElementById('btnSheetMark');
+  const btnSheetTarget = document.getElementById('btnSheetTarget');
+  const toastEl = document.getElementById('toast');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+
+  const t = k => (I18N[lang] && I18N[lang][k]) || k;
+  const tokQ = encodeURIComponent(TOKEN);
+  let toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2100);
+  }
+  function sendWs(obj) {
+    if (ws && ws.readyState === 1) {
+      try { ws.send(JSON.stringify(obj)); } catch (_) {}
+    }
+  }
+
+  function refreshUI() {
+    if (mapPill) {
+      mapPill.textContent = (currentMeta && currentMeta.name) ? String(currentMeta.name) : t('modeHd');
+    }
+
+    btnFollow.textContent = t('follow');
+    btnFollow.classList.toggle('active', follow);
+    if (btnCenter) btnCenter.classList.toggle('accent', !follow);
+    btnLang.textContent = lang === 'vi' ? 'VI' : 'EN';
+    statusText.textContent = t(wsStatus);
+    statusDot.className = 'dot ' + (wsStatus === 'live' ? 'ok' : (wsStatus === 'offline' ? 'err' : ''));
+
+    filterToggleBtn.textContent = filterCats.size > 0 ? `${t('filter')} (${filterCats.size})` : t('filter');
+    filterToggleBtn.classList.toggle('active', filterOpen || filterCats.size > 0);
+    chipsBar.hidden = !filterOpen || catList.length === 0;
+    const hasRoute = Boolean(activeRoute && activeRoute.active && Array.isArray(activeRoute.sections_summary) && activeRoute.sections_summary.length > 0);
+    btnRouteHd.hidden = !hasRoute;
+    btnRouteHd.classList.toggle('active', routeOpen && hasRoute);
+    routeChipsBar.hidden = !routeOpen || !hasRoute;
+
+    let flLabel = state.floor_name || (state.is_underground ? 'B1' : t('surface'));
+    if (manualFloorOverride === 'surface') flLabel = `${t('surface')}*`;
+    else if (manualFloorOverride && typeof manualFloorOverride === 'object') flLabel = `${manualFloorOverride.floor_short || manualFloorOverride.floor_name}*`;
+    floorBadgeBtn.textContent = `${t('floor')}: ${flLabel}`;
+
+    if (hasFix) {
+      coordBadge.textContent = `Lat: ${Number(state.lat).toFixed(1)} | Lng: ${Number(state.lng).toFixed(1)}`;
+    }
+    if (state.target_pin && state.target_pin.lat != null && state.target_pin.lng != null) {
+      const nm = state.target_pin.name || `#${state.target_pin.id || ''}`;
+      targetLabel.textContent = `${t('target')}: ${nm}`;
+      const d = Math.hypot(Number(state.target_pin.lat) - Number(state.lat || 0), Number(state.target_pin.lng) - Number(state.lng || 0));
+      distLabel.textContent = `${d.toFixed(1)} m`;
+    } else {
+      targetLabel.textContent = `${t('target')}: ${t('none')}`;
+      distLabel.textContent = '-- m';
+    }
+    const btnUnlockTarget = document.getElementById('btnUnlockTarget');
+    const hasLocked = Boolean(state.target_locked && state.target_pin && state.target_pin.id != null);
+    if (btnUnlockTarget) {
+      btnUnlockTarget.hidden = !hasLocked;
+      btnUnlockTarget.textContent = t('unlockShort');
+    }
+
+    const isSelectedLocked = Boolean(
+      selectedPin && hasLocked && String(state.target_pin.id) === String(selectedPin.id)
+    );
+    btnSheetTarget.textContent = isSelectedLocked ? t('unlockBtn') : t('targetBtn');
+    btnSheetTarget.className = 'sbtn ' + (isSelectedLocked ? 'unmark' : 'target');
+    if (selectedPin) {
+      btnSheetMark.textContent = selectedPin.marked ? t('unmarkBtn') : t('markBtn');
+      btnSheetMark.className = 'sbtn ' + (selectedPin.marked ? 'unmark' : 'mark');
+    }
+  }
+
+  function resizeCanvases() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = hdCanvas.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      const nw = Math.floor(rect.width * dpr);
+      const nh = Math.floor(rect.height * dpr);
+      if (hdCanvas.width !== nw || hdCanvas.height !== nh) {
+        hdCanvas.width = nw;
+        hdCanvas.height = nh;
+      }
+      hdCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+  }
+  window.addEventListener('resize', resizeCanvases);
+  if (window.visualViewport && typeof window.visualViewport.addEventListener === 'function') {
+    window.visualViewport.addEventListener('resize', resizeCanvases);
+  }
+  if (typeof ResizeObserver === 'function') {
+    const ro = new ResizeObserver(() => resizeCanvases());
+    ro.observe(paneHd);
+  }
+  for (const evName of ['gesturestart', 'gesturechange', 'gestureend']) {
+    document.addEventListener(evName, e => e.preventDefault(), { passive: false });
+  }
+  document.addEventListener('touchmove', e => {
+    if (e.touches && e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
+  // ---------------- Map Meta & Tile Engine ----------------
+  async function loadMapMeta(mapId) {
+    const mid = Number(mapId) || 2;
+    if (mapMetaCache.has(mid)) {
+      currentMeta = mapMetaCache.get(mid);
+      refreshUI();
+      return;
+    }
+    try {
+      const res = await fetch(`/api/map_meta/${mid}?lang=${encodeURIComponent(lang)}&token=${tokQ}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.ok) {
+        mapMetaCache.set(mid, data);
+        if (currentMapId === mid) {
+          currentMeta = data;
+          refreshUI();
+        }
+      }
+    } catch (_) {}
+  }
+
+  function pruneStaleTileJobs(keepMapId, keepZ) {
+    for (let i = tileQueue.length - 1; i >= 0; i--) {
+      const job = tileQueue[i];
+      if (job.mapId !== keepMapId || Math.abs(job.z - keepZ) > 1) {
+        tileQueue.splice(i, 1);
+        const entry = tileCache.get(job.key);
+        if (entry && entry.status === 'loading' && !entry.started) {
+          tileCache.delete(job.key);
+        }
+      }
+    }
+  }
+
+  function pumpTileQueue() {
+    while (tileInflight < MAX_TILE_INFLIGHT && tileQueue.length > 0) {
+      const job = tileQueue.pop();
+      const entry = tileCache.get(job.key);
+      if (!entry || entry.started) continue;
+      entry.started = true;
+      tileInflight++;
+      const img = new Image();
+      img.decoding = 'async';
+      img.onload = () => {
+        tileInflight--;
+        entry.status = 'ok';
+        entry.img = img;
+        entry.ts = performance.now();
+        pumpTileQueue();
+      };
+      img.onerror = () => {
+        tileInflight--;
+        entry.status = 'err';
+        entry.ts = performance.now();
+        pumpTileQueue();
+      };
+      img.src = job.url;
+    }
+  }
+
+  function getTile(mapId, z, tx, ty) {
+    const key = `${mapId}:${z}:${tx}:${ty}`;
+    const hit = tileCache.get(key);
+    if (hit) {
+      hit.ts = performance.now();
+      return hit;
+    }
+    if (tileCache.size >= TILE_LIMIT) {
+      let oldK = null, oldTs = Infinity;
+      for (const [k, v] of tileCache.entries()) {
+        if (v.status !== 'loading' && v.ts < oldTs) { oldTs = v.ts; oldK = k; }
+      }
+      if (oldK) tileCache.delete(oldK);
+    }
+    while (tileQueue.length >= 48) {
+      const dropped = tileQueue.shift();
+      const dEntry = dropped && tileCache.get(dropped.key);
+      if (dEntry && dEntry.status === 'loading' && !dEntry.started) {
+        tileCache.delete(dropped.key);
+      }
+    }
+    const entry = { status: 'loading', img: null, ts: performance.now(), started: false };
+    tileCache.set(key, entry);
+    tileQueue.push({ key, mapId, z, url: `/api/tile/${mapId}/${z}/${tx}/${ty}?token=${tokQ}` });
+    pumpTileQueue();
+    return entry;
+  }
+
+  function preloadMarkerUiAssets() {
+    for (const k of MARKER_UI_KEYS) {
+      let attempts = 0;
+      const loadOne = () => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.onload = () => { markerUiAssets.set(k, img); };
+        img.onerror = () => {
+          attempts += 1;
+          if (attempts <= 3) setTimeout(loadOne, attempts * 2200);
+        };
+        img.src = `/api/marker_asset/${encodeURIComponent(k)}?token=${tokQ}`;
+      };
+      loadOne();
+    }
+  }
+
+  function drawTargetBeaconRing(ctx, cx, cy, radius, accentHex) {
+    const col = accentHex || '#38bdf8';
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius + 3.2, 0, Math.PI * 2);
+    ctx.strokeStyle = col;
+    ctx.globalAlpha = 0.34;
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    ctx.globalAlpha = 0.72;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 3.4;
+    ctx.stroke();
+
+    ctx.globalAlpha = 0.95;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius + 3.8, 0, Math.PI * 2);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.9;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Exact HoYoLAB Interactive Map `ciLayer._drawImage` marker renderer using official CDN sprites.
+  function drawHoyolabMarker(ctx, sx, sy, u, iconImg, opts) {
+    const isSel = Boolean(opts && opts.selected);
+    const isTgt = Boolean(opts && opts.target);
+    const iconSign = Number((opts && opts.iconSign) || 0) || 0;
+    const zLevel = Number((opts && opts.zLevel) || 0) || 0;
+    const opacity = (opts && typeof opts.opacity === 'number') ? opts.opacity : 1;
+    const headCy = sy - 19.85 * u;
+
+    ctx.save();
+    ctx.globalAlpha = opacity;
+
+    // 1. Official selected corner brackets (+ subtle pulse halo for active target)
+    if (isSel || isTgt) {
+      const selFrame = markerUiAssets.get('marker_selected_frame');
+      if (selFrame) {
+        ctx.drawImage(selFrame, sx - 19 * u, headCy - 19 * u, 38 * u, 38 * u);
+      }
+    }
+
+    // 2. Official pin backdrop (normal vs selected)
+    const bgImg = markerUiAssets.get((isSel || isTgt) ? 'marker_bg_selected' : 'marker_bg_normal')
+      || markerUiAssets.get('marker_bg_normal');
+    if (bgImg) {
+      ctx.drawImage(bgImg, sx - 21 * u, sy - 40 * u, 42 * u, 45 * u);
+    } else {
+      ctx.beginPath();
+      ctx.arc(sx, headCy, 15.2 * u, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(44, 51, 66, 0.92)';
+      ctx.fill();
+      ctx.lineWidth = Math.max(1.3, 2.2 * u);
+      ctx.strokeStyle = (isSel || isTgt) ? '#5af0ff' : '#ccb88c';
+      ctx.stroke();
+    }
+
+    // 3. Official category / waypoint icon circular-clipped dead-center inside pin head
+    if (iconImg) {
+      const r = 14.2 * u;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(sx, headCy, r, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(iconImg, sx - r, headCy - r, r * 2, r * 2);
+      ctx.restore();
+    } else if (opts && opts.fallbackColor) {
+      ctx.beginPath();
+      ctx.arc(sx, headCy, 6.4 * u, 0, Math.PI * 2);
+      ctx.fillStyle = opts.fallbackColor;
+      ctx.fill();
+    }
+
+    // 4. Official bottom-right sub-badge (`icon_sign`: 1 = underground layered, 3 = waterhole)
+    let subKey = null;
+    if (iconSign === 1) subKey = (isSel || isTgt) ? 'marker_ug_mark_selected' : 'marker_ug_mark';
+    else if (iconSign === 3) subKey = (isSel || isTgt) ? 'marker_wh_mark_selected' : 'marker_wh_mark';
+    if (subKey) {
+      const subImg = markerUiAssets.get(subKey);
+      if (subImg) {
+        ctx.drawImage(subImg, sx + 6.5 * u, sy - 20 * u, 14 * u, 14 * u);
+      }
+    }
+
+    // 5. Official left-side Z-level vertical bar (`z_level`: 1 = upper, 2 = middle, 3 = lower)
+    const zKey = zLevel === 1 ? 'marker_z_upper' : (zLevel === 2 ? 'marker_z_middle' : (zLevel === 3 ? 'marker_z_lower' : null));
+    if (zKey) {
+      const zImg = markerUiAssets.get(zKey);
+      if (zImg) {
+        ctx.drawImage(zImg, sx - 19 * u, sy - 35 * u, 9 * u, 25 * u);
+      }
+    }
+
+    ctx.restore();
+  }
+
+  function getIconImg(mapId, labelId) {
+    if (!labelId || labelId <= 0) return null;
+    const key = `${mapId}:${labelId}`;
+    const hit = iconCache.get(key);
+    if (hit) {
+      if (hit.status === 'ok') return hit.img;
+      if (hit.status === 'loading') return null;
+      if (hit.status === 'err' && performance.now() < hit.retryAt) return null;
+    }
+    iconCache.set(key, { status: 'loading', img: null, retryAt: 0 });
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => { iconCache.set(key, { status: 'ok', img, retryAt: 0 }); };
+    img.onerror = () => { iconCache.set(key, { status: 'err', img: null, retryAt: performance.now() + 6000 }); };
+    img.src = `/api/icon/${mapId}/${labelId}?token=${tokQ}`;
+    return null;
+  }
+
+  // Unified Mode A pin pool (matches Native Live Radar): keeps all sidebar filter pins AND merges
+  // active Route collectible stops so route pins render with official HoYoLAB icons and are tappable.
+  function getEffectivePins() {
+    const base = allPins.length > 0 ? allPins : (Array.isArray(state.nearby_pins) ? state.nearby_pins.map(p => ({
+      id: String(p.id || ''), lat: Number(p.lat), lng: Number(p.lng),
+      labelId: Number(p.label_id || p.labelId || 0), floorId: p.floor_id ? String(p.floor_id) : null,
+      marked: false, name: p.name || p.label_name || '', isUg: Boolean(p.is_underground),
+      iconSign: Number(p.icon_sign || (p.is_underground ? 1 : 0)), zLevel: Number(p.z_level || 0),
+      isRouteStop: false
+    })) : []);
+
+    if (!activeRoute || !activeRoute.active || Number(activeRoute.map_id || 2) !== currentMapId || !Array.isArray(activeRoute.active_stops)) {
+      return base;
+    }
+    const out = base.slice();
+    const byId = new Map();
+    for (let i = 0; i < out.length; i++) byId.set(out[i].id, i);
+    for (let i = 0; i < activeRoute.active_stops.length; i++) {
+      const st = activeRoute.active_stops[i];
+      if (!st || st.kind !== 'collectible' || st.lat == null || st.lng == null) continue;
+      const sid = String(st.id || '');
+      if (!sid) continue;
+      const existingIdx = byId.get(sid);
+      if (existingIdx !== undefined) {
+        const ex = out[existingIdx];
+        out[existingIdx] = Object.assign({}, ex, {
+          isRouteStop: true,
+          labelId: ex.labelId || Number(st.label_id || 0),
+          marked: Boolean(ex.marked || st.collected)
+        });
+      } else {
+        byId.set(sid, out.length);
+        out.push({
+          id: sid,
+          lat: Number(st.lat),
+          lng: Number(st.lng),
+          labelId: Number(st.label_id || 0),
+          floorId: st.floor_id != null && st.floor_id !== '' ? String(st.floor_id) : null,
+          marked: Boolean(st.collected),
+          name: String(st.name || ''),
+          isUg: Boolean(st.is_underground),
+          iconSign: st.is_underground ? 1 : 0,
+          zLevel: 0,
+          isRouteStop: true
+        });
+      }
+    }
+    return out;
+  }
+
+  function getOverlayImg(mapId, groupId, floorId) {
+    const key = `${mapId}:${groupId}:${floorId}`;
+    const hit = overlayCache.get(key);
+    if (hit === 'loading' || hit === 'err') return null;
+    if (hit) return hit;
+    overlayCache.set(key, 'loading');
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => { overlayCache.set(key, img); };
+    img.onerror = () => { overlayCache.set(key, 'err'); };
+    img.src = `/api/ug_overlay/${mapId}/${groupId}/${floorId}?token=${tokQ}`;
+    return null;
+  }
+
+  function worldToScreen(lat, lng, w, h) {
+    const s = Math.pow(2, viewZ);
+    return [w / 2 + (lng - camLng) * s, h / 2 + (lat - camLat) * s];
+  }
+  function screenToWorld(sx, sy, w, h) {
+    const s = Math.pow(2, viewZ);
+    return [camLat + (sy - h / 2) / s, camLng + (sx - w / 2) / s];
+  }
+
+  function resolveActiveFloors() {
+    if (!currentMeta || !Array.isArray(currentMeta.floors) || currentMeta.floors.length === 0) return [];
+    if (manualFloorOverride === 'surface') return [];
+    if (manualFloorOverride && typeof manualFloorOverride === 'object') {
+      return [manualFloorOverride];
+    }
+    if (!state.is_underground) return [];
+    const wantId = state.floor_id != null ? String(state.floor_id) : '';
+    const wantName = String(state.floor_name || '').trim().toLowerCase();
+    const matched = currentMeta.floors.find(f =>
+      (wantId && String(f.floor_id) === wantId) ||
+      (wantName && (String(f.floor_short || '').toLowerCase() === wantName || String(f.floor_name || '').toLowerCase() === wantName))
+    );
+    return matched ? [matched] : [];
+  }
+
+  function renderCategoryChips() {
+    chipsBar.innerHTML = '';
+    if (catList.length === 0) return;
+    const allChip = document.createElement('button');
+    allChip.type = 'button';
+    allChip.className = 'chip' + (filterCats.size === 0 ? ' active' : '');
+    allChip.textContent = t('allCats');
+    allChip.addEventListener('click', () => { filterCats.clear(); renderCategoryChips(); refreshUI(); });
+    chipsBar.appendChild(allChip);
+
+    for (const c of catList) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip' + (filterCats.has(c.id) ? ' active' : '');
+      const img = document.createElement('img');
+      img.src = `/api/icon/${currentMapId}/${c.id}?token=${tokQ}`;
+      img.onerror = () => { img.style.display = 'none'; };
+      const sp = document.createElement('span');
+      sp.textContent = `${c.name} (${c.count})`;
+      btn.appendChild(img);
+      btn.appendChild(sp);
+      btn.addEventListener('click', () => {
+        if (filterCats.has(c.id)) filterCats.delete(c.id);
+        else filterCats.add(c.id);
+        renderCategoryChips();
+        refreshUI();
+      });
+      chipsBar.appendChild(btn);
+    }
+  }
+
+  function renderRouteChips() {
+    routeChipsBar.innerHTML = '';
+    if (!activeRoute || !activeRoute.active || !Array.isArray(activeRoute.sections_summary)) return;
+    const curSec = Number(activeRoute.active_section || 0);
+    for (let i = 0; i < activeRoute.sections_summary.length; i++) {
+      const sec = activeRoute.sections_summary[i];
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip' + (i === curSec ? ' active' : '');
+      const dot = document.createElement('span');
+      dot.style.cssText = `display:inline-block;width:8px;height:8px;border-radius:50%;background:${sec.color || '#38bdf8'}`;
+      const lbl = document.createElement('span');
+      const secName = sec.name ? `${sec.name} ` : `S${i + 1} `;
+      lbl.textContent = `${secName}(${sec.done || 0}/${sec.total || 0})`;
+      btn.appendChild(dot);
+      btn.appendChild(lbl);
+      btn.addEventListener('click', () => {
+        sendWs({ type: 'SELECT_ROUTE_SECTION', section_index: i });
+        showToast(`${t('routeSelected')}: S${i + 1}`);
+        if (sec.anchor_teleport && Number(activeRoute.map_id || 2) === currentMapId) {
+          follow = false;
+          inertiaVx = 0; inertiaVy = 0;
+          camLat = Number(sec.anchor_teleport.lat);
+          camLng = Number(sec.anchor_teleport.lng);
+          refreshUI();
+        }
+      });
+      routeChipsBar.appendChild(btn);
+    }
+    const resetChip = document.createElement('button');
+    resetChip.type = 'button';
+    resetChip.className = 'chip';
+    resetChip.textContent = t('routeReset');
+    resetChip.addEventListener('click', () => {
+      sendWs({ type: 'RESET_ROUTE' });
+      showToast(t('routeResetOk'));
+    });
+    routeChipsBar.appendChild(resetChip);
+  }
+
+  // ---------------- 60 FPS Render Loop ----------------
+  let inertiaVx = 0, inertiaVy = 0;
+  let lastTick = performance.now();
+
+  function drawHdMap(now, dt) {
+    const rect = hdCanvas.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
+    if (w <= 0 || h <= 0) return;
+
+    // Interpolate player arrow smoothly at 60 FPS
+    if (hasFix) {
+      const alpha = 1 - Math.exp(-dt * 14);
+      dispLat += (Number(state.lat) - dispLat) * alpha;
+      dispLng += (Number(state.lng) - dispLng) * alpha;
+      let dh = ((Number(state.heading || 0) - dispHdg + 540) % 360) - 180;
+      dispHdg += dh * alpha;
+      if (state.camera_heading != null && !Number.isNaN(Number(state.camera_heading))) {
+        const ch = Number(state.camera_heading);
+        if (dispCamHdg == null) dispCamHdg = ch;
+        else {
+          let dc = ((ch - dispCamHdg + 540) % 360) - 180;
+          dispCamHdg += dc * alpha;
+        }
+      } else {
+        dispCamHdg = null;
+      }
+      if (follow && !draggingHd && Math.abs(inertiaVx) < 0.05 && Math.abs(inertiaVy) < 0.05) {
+        camLat = dispLat;
+        camLng = dispLng;
+      }
+    }
+
+    // Apply touch inertia
+    if (!draggingHd && !follow && (Math.abs(inertiaVx) > 0.25 || Math.abs(inertiaVy) > 0.25)) {
+      const s = Math.pow(2, viewZ);
+      camLng -= (inertiaVx * dt * 60) / s;
+      camLat -= (inertiaVy * dt * 60) / s;
+      const damp = Math.pow(0.90, dt * 60);
+      inertiaVx *= damp;
+      inertiaVy *= damp;
+    } else if (!draggingHd) {
+      inertiaVx = 0; inertiaVy = 0;
+    }
+
+    hdCtx.clearRect(0, 0, w, h);
+    hdCtx.fillStyle = '#0e1118';
+    hdCtx.fillRect(0, 0, w, h);
+
+    const scale = Math.pow(2, viewZ);
+    const [topLat, leftLng] = screenToWorld(0, 0, w, h);
+    const [botLat, rightLng] = screenToWorld(w, h, w, h);
+
+    // 1. Draw HD Map Tiles (with multi-zoom parent fallback)
+    const d2 = currentMeta && currentMeta.detail_v2;
+    if (d2 && Array.isArray(d2.origin) && Array.isArray(d2.total_size)) {
+      const ox = d2.origin[0], oy = d2.origin[1];
+      const minZ = typeof d2.min_zoom === 'number' ? d2.min_zoom : -4;
+      const maxZ = typeof d2.max_zoom === 'number' ? d2.max_zoom : 0;
+      const tz = Math.max(minZ, Math.min(maxZ, Math.round(viewZ)));
+      const st = Math.pow(2, tz);
+      const tileWorld = 256 / st;
+      const maxTx = Math.max(0, Math.floor((d2.total_size[0] * st - 1) / 256));
+      const maxTy = Math.max(0, Math.floor((d2.total_size[1] * st - 1) / 256));
+      const tx0 = Math.max(0, Math.floor((leftLng + ox) / tileWorld));
+      const tx1 = Math.min(maxTx, Math.floor((rightLng + ox) / tileWorld));
+      const ty0 = Math.max(0, Math.floor((topLat + oy) / tileWorld));
+      const ty1 = Math.min(maxTy, Math.floor((botLat + oy) / tileWorld));
+
+      for (let ty = ty0; ty <= ty1; ty++) {
+        for (let tx = tx0; tx <= tx1; tx++) {
+          const wx0 = tx * tileWorld - ox;
+          const wy0 = ty * tileWorld - oy;
+          const [sx0, sy0] = worldToScreen(wy0, wx0, w, h);
+          const [sx1, sy1] = worldToScreen(wy0 + tileWorld, wx0 + tileWorld, w, h);
+          const dw = sx1 - sx0 + 0.6;
+          const dh = sy1 - sy0 + 0.6;
+
+          const tile = getTile(currentMapId, tz, tx, ty);
+          if (tile.status === 'ok' && tile.img) {
+            hdCtx.drawImage(tile.img, sx0, sy0, dw, dh);
+          } else {
+            // Draw nearest loaded coarser parent tile to avoid black flashes
+            for (let pz = tz - 1; pz >= minZ; pz--) {
+              const shift = tz - pz;
+              const ptx = tx >> shift;
+              const pty = ty >> shift;
+              const pKey = `${currentMapId}:${pz}:${ptx}:${pty}`;
+              const pHit = tileCache.get(pKey);
+              if (pHit && pHit.status === 'ok' && pHit.img) {
+                const sub = 256 / (1 << shift);
+                const rx = (tx - (ptx << shift)) * sub;
+                const ry = (ty - (pty << shift)) * sub;
+                hdCtx.drawImage(pHit.img, rx, ry, sub, sub, sx0, sy0, dw, dh);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Underground floor overlays
+    const ugFloors = resolveActiveFloors();
+    if (ugFloors.length > 0) {
+      hdCtx.fillStyle = 'rgba(10, 12, 18, 0.56)';
+      hdCtx.fillRect(0, 0, w, h);
+      for (const fl of ugFloors) {
+        const b = fl.bounds;
+        if (!Array.isArray(b) || b.length < 4) continue;
+        const img = getOverlayImg(currentMapId, fl.group_id, fl.floor_id);
+        if (!img) continue;
+        const [minLng, maxLng, minLat, maxLat] = b;
+        const [x0, y0] = worldToScreen(minLat, minLng, w, h);
+        const [x1, y1] = worldToScreen(maxLat, maxLng, w, h);
+        if (fl.reflect_y) {
+          hdCtx.save();
+          hdCtx.translate(x0, y1);
+          hdCtx.scale(1, -1);
+          hdCtx.drawImage(img, 0, 0, x1 - x0, y1 - y0);
+          hdCtx.restore();
+        } else {
+          hdCtx.drawImage(img, x0, y0, x1 - x0, y1 - y0);
+        }
+      }
+    }
+
+    // 3. Active Route lines drawn beneath waypoints & pins (matching M-Map & Native Radar)
+    const hasActiveRouteOnMap = Boolean(activeRoute && activeRoute.active && Number(activeRoute.map_id || 2) === currentMapId && Array.isArray(activeRoute.active_stops));
+    const routeAccent = hasActiveRouteOnMap ? (activeRoute.section_color || '#38bdf8') : '#38bdf8';
+    if (hasActiveRouteOnMap) {
+      const rStops = activeRoute.active_stops;
+      const rEdges = Array.isArray(activeRoute.active_edges) ? activeRoute.active_edges : [];
+      const drawRouteSeg = (lat1, lng1, lat2, lng2, isDone) => {
+        const [x1, y1] = worldToScreen(Number(lat1), Number(lng1), w, h);
+        const [x2, y2] = worldToScreen(Number(lat2), Number(lng2), w, h);
+        hdCtx.save();
+        hdCtx.lineCap = 'round';
+        hdCtx.lineJoin = 'round';
+        if (isDone) {
+          hdCtx.setLineDash([6, 5]);
+          hdCtx.strokeStyle = 'rgba(148,163,184,0.52)';
+          hdCtx.lineWidth = 2.0;
+          hdCtx.beginPath();
+          hdCtx.moveTo(x1, y1);
+          hdCtx.lineTo(x2, y2);
+          hdCtx.stroke();
+        } else {
+          hdCtx.strokeStyle = 'rgba(2,6,23,0.58)';
+          hdCtx.lineWidth = 5.6;
+          hdCtx.beginPath();
+          hdCtx.moveTo(x1, y1);
+          hdCtx.lineTo(x2, y2);
+          hdCtx.stroke();
+
+          hdCtx.strokeStyle = routeAccent;
+          hdCtx.lineWidth = 3.0;
+          hdCtx.beginPath();
+          hdCtx.moveTo(x1, y1);
+          hdCtx.lineTo(x2, y2);
+          hdCtx.stroke();
+
+          const mx = (x1 + x2) * 0.5, my = (y1 + y2) * 0.5;
+          hdCtx.translate(mx, my);
+          hdCtx.rotate(Math.atan2(y2 - y1, x2 - x1));
+          hdCtx.fillStyle = routeAccent;
+          hdCtx.strokeStyle = '#020617';
+          hdCtx.lineWidth = 1.6;
+          hdCtx.beginPath();
+          hdCtx.moveTo(6.5, 0); hdCtx.lineTo(-4.5, -4); hdCtx.lineTo(-4.5, 4); hdCtx.closePath();
+          hdCtx.stroke();
+          hdCtx.fill();
+        }
+        hdCtx.restore();
+      };
+
+      if (activeRoute.anchor_teleport && activeRoute.anchor_teleport.lat != null && rStops.length > 0) {
+        const a = activeRoute.anchor_teleport;
+        const first = rStops[0];
+        if (Math.hypot(Number(a.lat) - Number(first.lat), Number(a.lng) - Number(first.lng)) > 12) {
+          drawRouteSeg(a.lat, a.lng, first.lat, first.lng, Boolean(first.collected));
+        }
+      }
+      const segPairs = rEdges.length > 0
+        ? rEdges
+        : rStops.slice(0, -1).map((_, idx) => [idx, idx + 1]);
+      for (const edge of segPairs) {
+        if (!Array.isArray(edge) || edge.length < 2) continue;
+        const a = rStops[edge[0]], b = rStops[edge[1]];
+        if (!a || !b) continue;
+        drawRouteSeg(a.lat, a.lng, b.lat, b.lng, Boolean(a.collected && b.collected));
+      }
+      // Subtle bend joints underneath markers for walking waypoints only (collectibles render as full HoYoLAB markers below).
+      for (let idx = 0; idx < rStops.length; idx++) {
+        const st = rStops[idx];
+        if (!st || st.kind !== 'waypoint') continue;
+        const [sx, sy] = worldToScreen(Number(st.lat), Number(st.lng), w, h);
+        hdCtx.save();
+        hdCtx.beginPath();
+        hdCtx.arc(sx, sy, 4.4, 0, Math.PI * 2);
+        hdCtx.fillStyle = st.collected ? 'rgba(100,116,139,0.7)' : routeAccent;
+        hdCtx.fill();
+        hdCtx.strokeStyle = '#020617';
+        hdCtx.lineWidth = 1.6;
+        hdCtx.stroke();
+        hdCtx.restore();
+      }
+    } else {
+      const legs = Array.isArray(state.route_legs) ? state.route_legs : [];
+      for (const leg of legs) {
+        const fLat = leg.from_lat != null ? leg.from_lat : (leg.points && leg.points[0] ? leg.points[0][0] : null);
+        const fLng = leg.from_lng != null ? leg.from_lng : (leg.points && leg.points[0] ? leg.points[0][1] : null);
+        const tLat = leg.to_lat != null ? leg.to_lat : (leg.points && leg.points[1] ? leg.points[1][0] : null);
+        const tLng = leg.to_lng != null ? leg.to_lng : (leg.points && leg.points[1] ? leg.points[1][1] : null);
+        if (fLat == null || fLng == null || tLat == null || tLng == null) continue;
+        const [x1, y1] = worldToScreen(Number(fLat), Number(fLng), w, h);
+        const [x2, y2] = worldToScreen(Number(tLat), Number(tLng), w, h);
+        hdCtx.save();
+        hdCtx.beginPath();
+        if (leg.is_teleport) {
+          hdCtx.setLineDash([6, 6]);
+          hdCtx.strokeStyle = '#38bdf8';
+          hdCtx.lineWidth = 2.2;
+        } else {
+          hdCtx.strokeStyle = '#bb86fc';
+          hdCtx.lineWidth = 3;
+        }
+        hdCtx.moveTo(x1, y1);
+        hdCtx.lineTo(x2, y2);
+        hdCtx.stroke();
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+        hdCtx.translate(mx, my);
+        hdCtx.rotate(Math.atan2(y2 - y1, x2 - x1));
+        hdCtx.fillStyle = leg.is_teleport ? '#38bdf8' : '#e9d5ff';
+        hdCtx.beginPath();
+        hdCtx.moveTo(6, 0); hdCtx.lineTo(-4, -4); hdCtx.lineTo(-4, 4); hdCtx.closePath();
+        hdCtx.fill();
+        hdCtx.restore();
+      }
+    }
+
+    // 4. Primary Teleport Waypoints / Statues / Domains (highlighting active target or Route anchor teleport)
+    let targetRendered = false;
+    let anchorRendered = false;
+    const anchorTp = hasActiveRouteOnMap && activeRoute.anchor_teleport && activeRoute.anchor_teleport.lat != null
+      ? activeRoute.anchor_teleport
+      : null;
+    if (currentMeta && Array.isArray(currentMeta.waypoints) && scale >= 0.14) {
+      const activeFloorIds = new Set(ugFloors.map(f => String(f.floor_id)));
+      const playerUg = ugFloors.length > 0;
+      const wpScale = 0.72;
+      const deferredWps = [];
+      for (const wp of currentMeta.waypoints) {
+        if (!wp.is_primary || !wp.label_id || wp.label_id <= 0) continue;
+        if (wp.y_pos < topLat - 48 / scale || wp.y_pos > botLat + 48 / scale || wp.x_pos < leftLng - 48 / scale || wp.x_pos > rightLng + 48 / scale) continue;
+        const [wx, wy] = worldToScreen(wp.y_pos, wp.x_pos, w, h);
+        const hitTarget = Boolean(
+          state.target_pin && (
+            String(state.target_pin.id || '') === String(wp.id) ||
+            (state.target_pin.lat != null && Math.hypot(wp.x_pos - Number(state.target_pin.lng), wp.y_pos - Number(state.target_pin.lat)) <= 14)
+          )
+        );
+        const hitAnchor = Boolean(
+          anchorTp && (
+            (anchorTp.point_id && String(anchorTp.point_id) === String(wp.id)) ||
+            Math.hypot(wp.x_pos - Number(anchorTp.lng), wp.y_pos - Number(anchorTp.lat)) <= 14
+          )
+        );
+        if (hitTarget) targetRendered = true;
+        if (hitAnchor) anchorRendered = true;
+        if (hitTarget || hitAnchor) {
+          deferredWps.push({ wp, wx, wy });
+          continue;
+        }
+        const wpFid = wp.point_group && wp.point_group.floor_id ? String(wp.point_group.floor_id) : null;
+        const wpIsUg = Boolean((wp.z_level && wp.z_level !== 0) || (wp.icon_sign && wp.icon_sign !== 0) || wpFid);
+        const sameFloor = (!playerUg && !wpIsUg) || (playerUg && wpIsUg && (!wpFid || activeFloorIds.size === 0 || activeFloorIds.has(wpFid)));
+        const effSign = wp.icon_sign ? Number(wp.icon_sign) : (wpIsUg && !wp.z_level ? 1 : 0);
+        const wpIco = getIconImg(currentMapId, wp.label_id);
+        drawHoyolabMarker(hdCtx, wx, wy, wpScale, wpIco, {
+          selected: false,
+          target: false,
+          iconSign: effSign,
+          zLevel: Number(wp.z_level || 0),
+          opacity: sameFloor ? 0.96 : 0.42
+        });
+      }
+      for (const { wp, wx, wy } of deferredWps) {
+        const wpFid = wp.point_group && wp.point_group.floor_id ? String(wp.point_group.floor_id) : null;
+        const wpIsUg = Boolean((wp.z_level && wp.z_level !== 0) || (wp.icon_sign && wp.icon_sign !== 0) || wpFid);
+        const effSign = wp.icon_sign ? Number(wp.icon_sign) : (wpIsUg && !wp.z_level ? 1 : 0);
+        const wpIco = getIconImg(currentMapId, wp.label_id);
+        const hiScale = wpScale * 1.24;
+        drawTargetBeaconRing(hdCtx, wx, wy - 19.85 * hiScale, 17, routeAccent);
+        drawHoyolabMarker(hdCtx, wx, wy, hiScale, wpIco, {
+          selected: true,
+          target: true,
+          iconSign: effSign,
+          zLevel: Number(wp.z_level || 0),
+          opacity: 1.0
+        });
+      }
+    }
+
+    // 5. Unified pins (sidebar filter pins + active Route collectible stops) with official HoYoLAB assets
+    const padW = 55 / scale;
+    const renderPins = getEffectivePins();
+    const activeFloorIds = new Set(ugFloors.map(f => String(f.floor_id)));
+    const playerUg = ugFloors.length > 0;
+    const pinScaleBase = 0.82;
+
+    const visiblePinDraws = [];
+    for (let i = 0; i < renderPins.length; i++) {
+      const p = renderPins[i];
+      if (p.lat < topLat - padW || p.lat > botLat + padW || p.lng < leftLng - padW || p.lng > rightLng + padW) continue;
+      if (!p.isRouteStop && filterCats.size > 0 && !filterCats.has(p.labelId)) continue;
+      const [px, py] = worldToScreen(p.lat, p.lng, w, h);
+      const isSel = Boolean(selectedPin && selectedPin.id === p.id);
+      const isTgt = Boolean(state.target_pin && String(state.target_pin.id || '') === p.id);
+      if (isTgt) targetRendered = true;
+      const sameFloor = (!playerUg && !p.isUg) || (playerUg && p.isUg && (!p.floorId || activeFloorIds.size === 0 || activeFloorIds.has(p.floorId)));
+      visiblePinDraws.push({ p, px, py, isSel, isTgt, sameFloor, prio: (isSel || isTgt ? 4 : 0) + (p.isRouteStop ? 2 : 0) + (sameFloor ? 2 : 0) + (p.marked ? 0 : 1) });
+    }
+    visiblePinDraws.sort((a, b) => a.prio - b.prio);
+
+    for (let i = 0; i < visiblePinDraws.length; i++) {
+      const item = visiblePinDraws[i];
+      const { p, px, py, isSel, isTgt, sameFloor } = item;
+      const ico = getIconImg(currentMapId, p.labelId);
+      const effSign = p.iconSign ? Number(p.iconSign) : (p.isUg && !p.zLevel ? 1 : 0);
+      const u = (isSel || isTgt) ? (pinScaleBase * 1.18) : pinScaleBase;
+      const opacity = p.marked ? 0.34 : ((sameFloor || isSel || isTgt) ? 1.0 : 0.44);
+
+      if (isTgt) {
+        drawTargetBeaconRing(hdCtx, px, py - 19.85 * u, 17.5 * (u / pinScaleBase), p.isRouteStop ? routeAccent : '#38bdf8');
+      }
+
+      drawHoyolabMarker(hdCtx, px, py, u, ico, {
+        selected: isSel,
+        target: isTgt,
+        iconSign: effSign,
+        zLevel: Number(p.zLevel || 0),
+        opacity,
+        fallbackColor: p.isRouteStop ? routeAccent : null
+      });
+    }
+
+    // 5b. Fallback glowing beacon if active Route anchor or waypoint target isn't drawn as a marker
+    if (anchorTp && !anchorRendered) {
+      const [ax, ay] = worldToScreen(Number(anchorTp.lat), Number(anchorTp.lng), w, h);
+      drawTargetBeaconRing(hdCtx, ax, ay, 14.5, routeAccent);
+    }
+    if (!targetRendered && state.target_pin && state.target_pin.lat != null && state.target_pin.lng != null) {
+      const [tx, ty] = worldToScreen(Number(state.target_pin.lat), Number(state.target_pin.lng), w, h);
+      drawTargetBeaconRing(hdCtx, tx, ty, 15.5, routeAccent);
+    }
+
+    // 6. Player FOV + Arrow
+    if (hasFix) {
+      const [px, py] = worldToScreen(dispLat, dispLng, w, h);
+      if (dispCamHdg != null) {
+        const rad = (dispCamHdg - 90) * Math.PI / 180;
+        hdCtx.save();
+        hdCtx.translate(px, py);
+        hdCtx.beginPath();
+        hdCtx.moveTo(0, 0);
+        hdCtx.arc(0, 0, 42, rad - 0.45, rad + 0.45);
+        hdCtx.closePath();
+        hdCtx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+        hdCtx.fill();
+        hdCtx.restore();
+      }
+      const hdgRad = (dispHdg - 90) * Math.PI / 180;
+      hdCtx.save();
+      hdCtx.translate(px, py);
+      hdCtx.beginPath();
+      hdCtx.arc(0, 0, 14, 0, Math.PI * 2);
+      hdCtx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+      hdCtx.fill();
+      hdCtx.rotate(hdgRad);
+      hdCtx.beginPath();
+      hdCtx.moveTo(12, 0);
+      hdCtx.lineTo(-7.5, -6.5);
+      hdCtx.lineTo(-4, 0);
+      hdCtx.lineTo(-7.5, 6.5);
+      hdCtx.closePath();
+      hdCtx.fillStyle = '#ffffff';
+      hdCtx.strokeStyle = '#bb86fc';
+      hdCtx.lineWidth = 2;
+      hdCtx.fill();
+      hdCtx.stroke();
+      hdCtx.restore();
+    }
+  }
+
+  function loop(now) {
+    const dt = Math.min(0.1, Math.max(0.001, (now - lastTick) / 1000));
+    lastTick = now;
+    drawHdMap(now, dt);
+    requestAnimationFrame(loop);
+  }
+
+  // ---------------- HD Map Touch + Pin Picking ----------------
+  const hdPtrs = new Map();
+  let draggingHd = false, hdDownX = 0, hdDownY = 0, hdMoved = false, lastHdTapTs = 0;
+  let lastMoveTs = 0;
+  let pinchDist0 = 0, pinchZ0 = 0, pinchWorldLat = 0, pinchWorldLng = 0;
+
+  function pickPinAt(sx, sy) {
+    const rect = hdCanvas.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
+    let best = null, bestD = 34;
+    const pool = getEffectivePins();
+    const headOffsetY = 19.85 * 0.82;
+    for (const p of pool) {
+      if (!p.isRouteStop && filterCats.size > 0 && !filterCats.has(p.labelId)) continue;
+      const [px, py] = worldToScreen(p.lat, p.lng, w, h);
+      const d = Math.min(Math.hypot(px - sx, (py - headOffsetY) - sy), Math.hypot(px - sx, py - sy));
+      if (d < bestD) { bestD = d; best = p; }
+    }
+    if (!best && activeRoute && activeRoute.active && Number(activeRoute.map_id || 2) === currentMapId && Array.isArray(activeRoute.active_stops)) {
+      for (const st of activeRoute.active_stops) {
+        if (!st || st.lat == null || st.lng == null) continue;
+        const [px, py] = worldToScreen(Number(st.lat), Number(st.lng), w, h);
+        const d = Math.min(Math.hypot(px - sx, (py - headOffsetY) - sy), Math.hypot(px - sx, py - sy));
+        if (d < bestD) {
+          bestD = d;
+          best = {
+            id: String(st.id || ''), lat: Number(st.lat), lng: Number(st.lng),
+            labelId: Number(st.label_id || 0), floorId: st.floor_id ? String(st.floor_id) : null,
+            marked: Boolean(st.collected), name: String(st.name || ''), isUg: Boolean(st.is_underground),
+            iconSign: st.is_underground ? 1 : 0, zLevel: 0, isRouteStop: true
+          };
+        }
+      }
+    }
+    return best;
+  }
+
+  async function openPinSheet(pin) {
+    selectedPin = pin;
+    pinSheet.hidden = false;
+    sheetTitle.textContent = pin.name || catNameById.get(pin.labelId) || `#${pin.id}`;
+    const d = hasFix ? `${Math.hypot(pin.lat - Number(state.lat), pin.lng - Number(state.lng)).toFixed(1)} m` : '';
+    const cat = catNameById.get(pin.labelId) || '';
+    sheetSub.textContent = [cat, pin.floorId ? `B:${pin.floorId}` : t('surface'), d].filter(Boolean).join(' • ');
+    if (pin.labelId) {
+      sheetIco.src = `/api/icon/${currentMapId}/${pin.labelId}?token=${tokQ}`;
+      sheetIco.hidden = false;
+    } else {
+      sheetIco.hidden = true;
+    }
+    sheetImg.hidden = true;
+    sheetDesc.textContent = t('guideLoading');
+    refreshUI();
+
+    const gKey = `${lang}:${pin.id}`;
+    if (guideCache.has(gKey)) {
+      applyGuideToSheet(guideCache.get(gKey), pin.id);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/pin_guide/${encodeURIComponent(pin.id)}?map_id=${currentMapId}&lang=${encodeURIComponent(lang)}&token=${tokQ}`);
+      if (res.ok) {
+        const g = await res.json();
+        guideCache.set(gKey, g);
+        if (selectedPin && selectedPin.id === pin.id) applyGuideToSheet(g, pin.id);
+      } else {
+        sheetDesc.textContent = t('guideEmpty');
+      }
+    } catch (_) {
+      sheetDesc.textContent = t('guideEmpty');
+    }
+  }
+
+  function applyGuideToSheet(g, pinId) {
+    sheetDesc.textContent = (g && g.description) ? g.description : t('guideEmpty');
+    if (g && g.has_image) {
+      const url = `/api/pin_guide_img/${encodeURIComponent(pinId)}?map_id=${currentMapId}&lang=${encodeURIComponent(lang)}&token=${tokQ}`;
+      sheetImg.src = url;
+      sheetImg.hidden = false;
+    }
+  }
+
+  hdCanvas.addEventListener('pointerdown', e => {
+    hdCanvas.setPointerCapture(e.pointerId);
+    hdPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    inertiaVx = 0; inertiaVy = 0;
+    if (hdPtrs.size === 1) {
+      draggingHd = true; hdMoved = false; hdDownX = e.clientX; hdDownY = e.clientY; lastMoveTs = performance.now();
+    } else if (hdPtrs.size === 2) {
+      draggingHd = false; hdMoved = true;
+      const [a, b] = Array.from(hdPtrs.values());
+      const rect = hdCanvas.getBoundingClientRect();
+      pinchDist0 = Math.max(10, Math.hypot(a.x - b.x, a.y - b.y));
+      pinchZ0 = viewZ;
+      const mx = (a.x + b.x) / 2 - rect.left, my = (a.y + b.y) / 2 - rect.top;
+      [pinchWorldLat, pinchWorldLng] = screenToWorld(mx, my, rect.width, rect.height);
+    }
+  });
+  hdCanvas.addEventListener('pointermove', e => {
+    const prev = hdPtrs.get(e.pointerId);
+    if (!prev) return;
+    const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+    hdPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (hdPtrs.size === 2) {
+      const [a, b] = Array.from(hdPtrs.values());
+      const dist = Math.max(10, Math.hypot(a.x - b.x, a.y - b.y));
+      const rect = hdCanvas.getBoundingClientRect();
+      const minZ = currentMeta && currentMeta.detail_v2 ? currentMeta.detail_v2.min_zoom - 0.5 : -4.5;
+      const maxZ = currentMeta && currentMeta.detail_v2 ? currentMeta.detail_v2.max_zoom + 2.8 : 2.8;
+      viewZ = Math.max(minZ, Math.min(maxZ, pinchZ0 + Math.log2(dist / pinchDist0)));
+      if (follow && hasFix) {
+        camLat = dispLat;
+        camLng = dispLng;
+      } else {
+        const mx = (a.x + b.x) / 2 - rect.left, my = (a.y + b.y) / 2 - rect.top;
+        const s = Math.pow(2, viewZ);
+        camLng = pinchWorldLng - (mx - rect.width / 2) / s;
+        camLat = pinchWorldLat - (my - rect.height / 2) / s;
+      }
+      refreshUI();
+      return;
+    }
+    if (draggingHd) {
+      if (Math.hypot(e.clientX - hdDownX, e.clientY - hdDownY) > 12) hdMoved = true;
+      if (hdMoved) {
+        follow = false;
+        const s = Math.pow(2, viewZ);
+        camLng -= dx / s;
+        camLat -= dy / s;
+        const now = performance.now();
+        const dtMs = Math.max(8, now - lastMoveTs);
+        lastMoveTs = now;
+        inertiaVx = dx * (16.6 / dtMs);
+        inertiaVy = dy * (16.6 / dtMs);
+        refreshUI();
+      }
+    }
+  });
+  const onHdUp = e => {
+    hdPtrs.delete(e.pointerId);
+    if (hdPtrs.size === 0) {
+      const wasTap = draggingHd && !hdMoved;
+      draggingHd = false;
+      if (wasTap) {
+        const rect = hdCanvas.getBoundingClientRect();
+        const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+        const hit = pickPinAt(sx, sy);
+        if (hit) {
+          openPinSheet(hit);
+        } else {
+          pinSheet.hidden = true;
+          selectedPin = null;
+          const now = performance.now();
+          if (now - lastHdTapTs < 280) {
+            const [wLat, wLng] = screenToWorld(sx, sy, rect.width, rect.height);
+            const maxZ = currentMeta && currentMeta.detail_v2 ? currentMeta.detail_v2.max_zoom + 2.8 : 2.8;
+            viewZ = Math.min(maxZ, viewZ + 1.0);
+            const s = Math.pow(2, viewZ);
+            follow = false;
+            camLng = wLng - (sx - rect.width / 2) / s;
+            camLat = wLat - (sy - rect.height / 2) / s;
+            refreshUI();
+          }
+          lastHdTapTs = now;
+        }
+      }
+    }
+  };
+  hdCanvas.addEventListener('pointerup', onHdUp);
+  hdCanvas.addEventListener('pointercancel', onHdUp);
+  hdCanvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect = hdCanvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    const [wLat, wLng] = screenToWorld(sx, sy, rect.width, rect.height);
+    const minZ = currentMeta && currentMeta.detail_v2 ? currentMeta.detail_v2.min_zoom - 0.5 : -4.5;
+    const maxZ = currentMeta && currentMeta.detail_v2 ? currentMeta.detail_v2.max_zoom + 2.8 : 2.8;
+    viewZ = Math.max(minZ, Math.min(maxZ, viewZ + (e.deltaY < 0 ? 0.35 : -0.35)));
+    const s = Math.pow(2, viewZ);
+    camLng = wLng - (sx - rect.width / 2) / s;
+    camLat = wLat - (sy - rect.height / 2) / s;
+  }, { passive: false });
+
+  // ---------------- Buttons & Actions ----------------
+  btnFollow.addEventListener('click', () => {
+    follow = !follow;
+    if (follow && hasFix) { camLat = dispLat; camLng = dispLng; }
+    refreshUI();
+  });
+  btnLang.addEventListener('click', () => {
+    lang = lang === 'vi' ? 'en' : 'vi';
+    mapMetaCache.delete(currentMapId);
+    loadMapMeta(currentMapId);
+    refreshUI();
+  });
+  filterToggleBtn.addEventListener('click', () => { filterOpen = !filterOpen; renderCategoryChips(); refreshUI(); });
+  floorBadgeBtn.addEventListener('click', () => {
+    const fls = (currentMeta && Array.isArray(currentMeta.floors)) ? currentMeta.floors : [];
+    if (fls.length === 0) return;
+    if (manualFloorOverride === null) manualFloorOverride = 'surface';
+    else if (manualFloorOverride === 'surface') manualFloorOverride = fls[0];
+    else {
+      const idx = fls.findIndex(f => String(f.floor_id) === String(manualFloorOverride.floor_id));
+      manualFloorOverride = (idx >= 0 && idx + 1 < fls.length) ? fls[idx + 1] : null;
+    }
+    refreshUI();
+  });
+  document.getElementById('btnZoomIn').addEventListener('click', () => {
+    const maxZ = currentMeta && currentMeta.detail_v2 ? currentMeta.detail_v2.max_zoom + 2.8 : 2.8;
+    viewZ = Math.min(maxZ, viewZ + 0.65);
+  });
+  document.getElementById('btnZoomOut').addEventListener('click', () => {
+    const minZ = currentMeta && currentMeta.detail_v2 ? currentMeta.detail_v2.min_zoom - 0.5 : -4.5;
+    viewZ = Math.max(minZ, viewZ - 0.65);
+  });
+  document.getElementById('btnCenter').addEventListener('click', () => {
+    follow = true;
+    if (hasFix) { camLat = dispLat; camLng = dispLng; }
+    refreshUI();
+  });
+  document.getElementById('btnUndoHd').addEventListener('click', () => { sendWs({ type: 'UNDO_LAST' }); showToast(t('undo')); });
+  btnRouteHd.addEventListener('click', () => {
+    if (!activeRoute || !activeRoute.active) { showToast(t('routeEmpty')); return; }
+    routeOpen = !routeOpen;
+    renderRouteChips();
+    refreshUI();
+  });
+
+  document.getElementById('sheetClose').addEventListener('click', () => { pinSheet.hidden = true; selectedPin = null; });
+  sheetImg.addEventListener('click', () => {
+    if (!sheetImg.src) return;
+    lightboxImg.src = sheetImg.src;
+    lightbox.hidden = false;
+  });
+  lightbox.addEventListener('click', () => { lightbox.hidden = true; });
+
+  btnSheetMark.addEventListener('click', () => {
+    if (!selectedPin) return;
+    const act = selectedPin.marked ? 'unmark' : 'mark';
+    selectedPin.marked = !selectedPin.marked;
+    const stored = pinById.get(selectedPin.id);
+    if (stored) stored.marked = selectedPin.marked;
+    if (activeRoute && Array.isArray(activeRoute.active_stops)) {
+      for (const st of activeRoute.active_stops) {
+        if (st && String(st.id || '') === String(selectedPin.id)) st.collected = selectedPin.marked;
+      }
+    }
+    sendWs({
+      type: 'MARK_PIN', action: act, pin_id: selectedPin.id,
+      lat: selectedPin.lat, lng: selectedPin.lng, map_id: currentMapId,
+      floor_id: selectedPin.floorId, is_underground: selectedPin.isUg, name: selectedPin.name
+    });
+    refreshUI();
+  });
+  const btnUnlockTargetEl = document.getElementById('btnUnlockTarget');
+  if (btnUnlockTargetEl) {
+    btnUnlockTargetEl.addEventListener('click', () => {
+      sendWs({ type: 'UNLOCK_TARGET' });
+      state.target_locked = false;
+      showToast(t('unlockedToast'));
+      refreshUI();
+    });
+  }
+  btnSheetTarget.addEventListener('click', () => {
+    if (!selectedPin) return;
+    const isLockedSelf = Boolean(
+      state.target_locked && state.target_pin && String(state.target_pin.id || '') === String(selectedPin.id)
+    );
+    if (isLockedSelf) {
+      sendWs({ type: 'UNLOCK_TARGET' });
+      state.target_locked = false;
+      showToast(t('unlockedToast'));
+      refreshUI();
+      return;
+    }
+    sendWs({
+      type: 'LOCK_TARGET', pin_id: selectedPin.id,
+      lat: selectedPin.lat, lng: selectedPin.lng, map_id: currentMapId,
+      floor_id: selectedPin.floorId, is_underground: selectedPin.isUg,
+      label_id: selectedPin.labelId, name: selectedPin.name
+    });
+    state.target_locked = true;
+    state.target_pin = {
+      id: selectedPin.id,
+      lat: selectedPin.lat,
+      lng: selectedPin.lng,
+      name: selectedPin.name || `#${selectedPin.id}`
+    };
+    showToast(`🧭 ${selectedPin.name || t('ackOk')}`);
+    refreshUI();
+  });
+
+  // ---------------- WebSocket Client ----------------
+  let retryMs = 1000;
+  let reconnectTimer = null;
+
+  function applyPinsSnapshot(msg) {
+    if (msg.map_id && Number(msg.map_id) !== currentMapId) {
+      currentMapId = Number(msg.map_id);
+      loadMapMeta(currentMapId);
+    }
+    const names = Array.isArray(msg.names) ? msg.names : [];
+    const cats = Array.isArray(msg.categories) ? msg.categories : [];
+    catNameById = new Map();
+    catList = [];
+    for (const c of cats) {
+      if (!c) continue;
+      const cid = Number(c.id || 0);
+      const cname = String(c.name || cid);
+      catNameById.set(cid, cname);
+      catList.push({ id: cid, name: cname, count: Number(c.count || 0) });
+    }
+    const rawPins = Array.isArray(msg.pins) ? msg.pins : [];
+    const nextPins = [];
+    const nextById = new Map();
+    for (let i = 0; i < rawPins.length; i++) {
+      const row = rawPins[i];
+      if (!Array.isArray(row) || row.length < 7) continue;
+      const isUg = Boolean(row[7]);
+      const p = {
+        id: String(row[0]),
+        lat: Number(row[1]),
+        lng: Number(row[2]),
+        labelId: Number(row[3] || 0),
+        floorId: row[4] != null && row[4] !== '' ? String(row[4]) : null,
+        marked: Boolean(row[5]),
+        name: String(names[row[6]] || ''),
+        isUg,
+        iconSign: row.length > 8 ? Number(row[8] || 0) : (isUg ? 1 : 0),
+        zLevel: row.length > 9 ? Number(row[9] || 0) : 0
+      };
+      nextPins.push(p);
+      nextById.set(p.id, p);
+      if (selectedPin && selectedPin.id === p.id) selectedPin.marked = p.marked;
+    }
+    allPins = nextPins;
+    pinById = nextById;
+    renderCategoryChips();
+    refreshUI();
+  }
+
+  function connectWs() {
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${proto}//${location.host}/ws/${tokQ}`;
+    wsStatus = 'connecting';
+    refreshUI();
+    const sock = new WebSocket(wsUrl);
+    sock.binaryType = 'arraybuffer';
+    ws = sock;
+
+    sock.onopen = () => {
+      if (ws !== sock) return;
+      retryMs = 1000;
+      lastWsMsgTs = performance.now();
+      wsStatus = 'live';
+      refreshUI();
+      sendWs({ type: 'HELLO' });
+    };
+    sock.onmessage = ev => {
+      if (ws !== sock) return;
+      lastWsMsgTs = performance.now();
+      if (typeof ev.data !== 'string') return;
+      try {
+        const msg = JSON.parse(ev.data);
+        if (!msg || typeof msg !== 'object') return;
+        if (msg.type === 'PONG') return;
+        if (msg.type === 'PINS_SNAPSHOT') {
+          applyPinsSnapshot(msg);
+          return;
+        }
+        if (msg.type === 'ROUTE_UPDATED') {
+          activeRoute = msg.active ? msg : null;
+          if (!activeRoute) routeOpen = false;
+          renderRouteChips();
+          refreshUI();
+          return;
+        }
+        if (msg.type === 'ACTION_ACK') {
+          if (msg.action === 'unlock_target' && msg.ok) {
+            state.target_locked = false;
+            refreshUI();
+            showToast(t('unlockedToast'));
+          } else {
+            showToast(msg.message || (msg.ok ? t('ackOk') : t('ackFail')));
+          }
+          return;
+        }
+        const payload = (msg.type === 'STATE' && msg.data) ? msg.data : msg;
+        if (payload.lat != null || payload.lng != null || payload.route_legs || payload.nearby_pins || payload.anchor_seq != null || typeof payload.target_locked === 'boolean') {
+          const nextMapId = payload.map_id ? Number(payload.map_id) : currentMapId;
+          const mapChanged = Boolean(payload.map_id && nextMapId !== currentMapId);
+          const nextAnchor = payload.anchor_seq != null ? Number(payload.anchor_seq) : null;
+          const isMapMAnchor = nextAnchor !== null && lastAnchorSeq !== null && nextAnchor !== lastAnchorSeq;
+          if (nextAnchor !== null) lastAnchorSeq = nextAnchor;
+
+          const newLat = payload.lat != null ? Number(payload.lat) : null;
+          const newLng = payload.lng != null ? Number(payload.lng) : null;
+          const hasCoords = newLat !== null && newLng !== null && Number.isFinite(newLat) && Number.isFinite(newLng);
+
+          state = Object.assign(state, payload);
+          if (mapChanged) {
+            currentMapId = nextMapId;
+            manualFloorOverride = null;
+            loadMapMeta(currentMapId);
+          }
+          if (hasCoords) {
+            const jumpDist = hasFix ? Math.hypot(newLat - dispLat, newLng - dispLng) : Infinity;
+            if (!hasFix || mapChanged || jumpDist > 180 || isMapMAnchor) {
+              dispLat = newLat;
+              dispLng = newLng;
+              dispHdg = Number(state.heading || 0);
+              dispCamHdg = (state.camera_heading != null && !Number.isNaN(Number(state.camera_heading)))
+                ? Number(state.camera_heading)
+                : null;
+              pruneStaleTileJobs(currentMapId, Math.round(viewZ));
+              if (!hasFix) loadMapMeta(currentMapId);
+              if (follow || !hasFix || mapChanged || isMapMAnchor) {
+                follow = true;
+                inertiaVx = 0;
+                inertiaVy = 0;
+                camLat = dispLat;
+                camLng = dispLng;
+              }
+            }
+            hasFix = true;
+          }
+          refreshUI();
+        }
+      } catch (_) {}
+    };
+    sock.onclose = () => {
+      if (ws !== sock) return;
+      wsStatus = 'offline';
+      refreshUI();
+      reconnectTimer = setTimeout(connectWs, retryMs);
+      retryMs = Math.min(8000, Math.round(retryMs * 1.5));
+    };
+    sock.onerror = () => { try { sock.close(); } catch (_) {} };
+  }
+
+  setInterval(() => {
+    if (!ws || ws.readyState !== 1) return;
+    if ((performance.now() - lastWsMsgTs) > 18000) {
+      try { ws.close(); } catch (_) {}
+      return;
+    }
+    sendWs({ type: 'PING' });
+  }, 8000);
+
+  function handlePageResume() {
+    if (document.visibilityState && document.visibilityState !== 'visible') return;
+    if (!ws || ws.readyState !== 1) {
+      retryMs = 600;
+      connectWs();
+    } else {
+      sendWs({ type: 'PING' });
+      sendWs({ type: 'REQUEST_SYNC' });
+    }
+  }
+  document.addEventListener('visibilitychange', handlePageResume);
+  window.addEventListener('pageshow', handlePageResume);
+
+  resizeCanvases();
+  preloadMarkerUiAssets();
+  loadMapMeta(currentMapId);
+  refreshUI();
+  connectWs();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

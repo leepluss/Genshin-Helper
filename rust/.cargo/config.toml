@@ -1,0 +1,8 @@
+# Release hygiene for scripts/audit_release.py --strict-ip:
+# Prevents embedding absolute developer workspace paths in MSVC PDB metadata,
+# and statically links the MSVC CRT so standalone EXEs require zero VC++ redist DLLs.
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+    "-C", "link-arg=/PDBALTPATH:%_PDB%",
+    "-C", "target-feature=+crt-static",
+]
