@@ -152,10 +152,3 @@ Tổ hợp `Alt` tay trái không dùng `Shift/Ctrl` — tùy chỉnh trực ti�
 
 ---
 
-## Ủng hộ tác giả (Donate)
-
-Genshin-Helper **miễn phí 100%, mở mã nguồn và không quảng cáo** — mọi tính năng đều mở trọn vẹn. Mỗi lần ra vùng đất mới (như Nod-Krai hay Snezhnaya sắp tới) đều cần thời gian cập nhật bản đồ, tầng hang ngầm và kiểm thử CV. Nếu công cụ giúp hành trình khám phá Teyvat của bạn nhàn hơn, một ly cà phê tự nguyện sẽ là động lực rất lớn để mình duy trì cập nhật nhanh & ổn định:
-
-| Ủng hộ Quốc tế | Ủng hộ tại Việt Nam (MoMo / VietQR) |
-| :---: | :---: |
-| <a href="https://ko-fi.com/minmories"><img src="https://img.shields.io/badge/Support%20on%20Ko--fi-minmories-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white" alt="Ủng hộ qua Ko-fi" /></a><br/><br/><strong>Ko-fi:</strong> <https://ko-fi.com/minmories><br/><strong>GitHub Sponsors:</strong> <code>@tuanminh26596</code> <em>(đang chờ duyệt)</em><br/><strong>Discord:</strong> <https://discord.gg/DdA4qyvqH3><br/><br/><sub>Hoàn toàn tự nguyện — cảm ơn bạn đã đồng hành cùng dự án!</sub> | <img src="assets/donate/momo_qr.jpg" alt="QR MoMo ủng hộ Genshin-Helper" width="180" /><br/><sub>Quét bằng MoMo hoặc app ngân hàng (VietQR)</sub> |
